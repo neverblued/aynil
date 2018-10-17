@@ -1,0 +1,19 @@
+{
+    "private": true,
+    "name": "futulisp",
+    "version": "0.0.1",
+    "keywords": [
+        "lisp",
+        "ecmascript"
+    ],
+    "dependencies": {
+        "lodash": "latest"
+    },
+    "devDependencies": {
+        "moment": "latest",
+        "nodemon": "latest"
+    },
+    "scripts": {
+        "start": "nodemon . --watch . --watch example/*"
+    }
+}
