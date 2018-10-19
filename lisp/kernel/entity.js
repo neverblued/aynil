@@ -1,50 +1,97 @@
 const _ = require ('lodash')
+const Scope = require ('./scope')
 class Datum {
-    constructor () {
-        [ this.name, this.body ] = arguments
+    constructor (block, name, body) {
+        this.block = block
+        this.name = name
+        this.body = body
+        //console.log ('[entity] created datum', this.name, this.body)
     }
     evaluate () {
         return this.body
     }
+    inspect () {
+        return this.toString ()
+    }
+    toString () {
+        return `<D:${ _.toUpper (this.name) }>`
+    }
 }
 class Callable extends Datum {
-    constructor () {
-        super (...arguments)
-        if (! _.isFunction (this.body)) {
-            console.log (this)
-            throw new Error (`bad callable ${ this }`)
-        }
-    }
-    evaluate (computer) {
-        return this.body.call (computer)
-    }
 }
 class Symbol extends Callable {
-    inspect () {
+    toString () {
         return `<S:${ _.toUpper (this.name) }>`
+    }
+    evaluate (block) {
+        if (_.isFunction (this.body)) {
+            return this.body.call (block)
+        } else {
+            return block.evaluate (this.body)
+        }
     }
 }
 class Macro extends Callable {
-    inspect () {
+    constructor (block, name, parameter, body) {
+        super (block, name, body)
+        this.parameter = parameter
+        //console.log ('[entity] created macro', this.name, this.parameter, this.body)
+    }
+    toString () {
         return `<M:${ _.toUpper (this.name) }>`
     }
-    evaluate (computer, parameter) {
-        return this.body.apply (computer, parameter)
+    evaluate (block, parameter) {
+        //console.log ('[entity] macro evaluate', this.name, parameter)
+        // TODO adapt this.parameter
+        if (_.isFunction (this.body)) {
+            return this.body.call (block, ...parameter)
+        } else {
+            return block.evaluate (this.body)
+        }
     }
 }
 class Lambda extends Macro {
-    inspect () {
-        return `<F:${ _.toUpper (this.name) }>`
+    constructor (block, name, parameter, body) {
+        super (block, name, parameter, body)
+        //console.log ('[entity] created lambda', this.name, this.parameter, this.body)
     }
-    evaluate (computer, parameter) {
-        return super.evaluate (computer, _.map (parameter, computer.evaluate.bind (computer)))
+    toString () {
+        return `<L:${ _.toUpper (this.name) }>`
+    }
+    evaluate (block, parameter) {
+        //console.log ('[entity] lambda evaluate', this.name, parameter, typeof this.body)
+        return block.stack (block => {
+            block.scope.lexical.integrate (this.block.scope.lexical)
+            //console.log ('+2?++', block.scope.lexical)
+            parameter = _.map (parameter, value => {
+                return block.evaluate (value)
+            })
+            _.forEach (this.parameter, (name, index) => {
+                block.set ('lexical', 'datum', name, parameter [index])
+            })
+            if (_.isFunction (this.body)) {
+                return this.body.call (block, ...parameter)
+            } else {
+                return block.evaluate (this.body)
+            }
+        })
     }
 }
-module.exports = { 
-    datum: Datum,
-    callable: Callable,
-    symbol: Symbol,
-    macro: Macro,
-    lambda: Lambda,
-    computeOrder: [ 'macro', 'lambda', 'symbol', 'datum' ]
+module.exports = {
+    model: {
+        datum: Datum,
+        callable: Callable,
+        symbol: Symbol,
+        macro: Macro,
+        lambda: Lambda,
+    },
+    order: {
+        evaluate: {
+            atom: [ 'symbol', 'datum' ],
+            list: [ 'macro', 'lambda' ],
+        },
+        scope: [
+            'symbol', 'datum', 'macro', 'lambda'
+        ],
+    },
 }

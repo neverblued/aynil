@@ -9,6 +9,7 @@ const template = {
     space: new RegExp ('[\\n\\t\\s]+', 'g'),
     token: new RegExp ('[\\(\\)]|[^\\n\\t\\s\\(\\)]+', 'g'),
 }
+const snippetLength = 42
 module.exports = {
     read (code) {
         const strings = {}
@@ -53,6 +54,11 @@ module.exports = {
                     break
                 case ')':
                     node = nodes.pop ()
+                    if (! node) {
+                        const code = tokens.join (' ') .substr (0, snippetLength)
+                        let error = new Error (`syntax error before "${ code }"`)
+                        throw error
+                    }
                     break
                 default:
                     node.push (token)

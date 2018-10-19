@@ -1,5 +1,5 @@
 const parser = require ('./kernel/parser')
-const computer = new (require ('./kernel/computer'))
+const computer = new (require ('./kernel/block'))
 require ('./dialect') (computer)
 module.exports = {
     parse (code) {
