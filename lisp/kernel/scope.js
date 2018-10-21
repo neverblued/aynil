@@ -76,7 +76,7 @@ class Lexical extends Scope {
             }
             _.forEach (binding, (thing, name) => {
                 //console.log ('[scope] integrate', entity, name, thing)
-                this.block.set ('lexical', entity, name, scope.block.evaluate (thing.evaluate (scope.block)))
+                this.block.scope.lexical.set (entity, name, thing)
             })
         })
         if (scope.block.base) {

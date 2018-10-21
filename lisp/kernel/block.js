@@ -45,17 +45,16 @@ class Block {
         return this.scope [scope] .get (entity, name)
     }
     evaluate (value) {
-        //console.log ('[block] evaluate', value, '..?!..')
-        const thing = (() => {
-            if (_.isUndefined (value)) {
-                return undefined
-                //let error = new Error (`undefined value`)
-                //throw error
-            } else if (_.isArray (value)) {
-                const [ name, ...parameter ] = value
-                return this.lookup ('list', 'callable', name) .evaluate (this, parameter)
-            } else {
-                if (value.length > 2 && value [0] === '"' && value [value.length - 1] === '"') {
+        //console.log ('[block] evaluate', value, '...')
+        const evaluated = (() => {
+            if (_.isUndefined (value) || _.isBoolean (value) || _.isNumber (value)) {
+                return value
+            } else if (_.isString (value)) {
+                const match = value.match (/^:([^\s\"]+)$/)
+                if (match) {
+                    const name = match [1]
+                    return new Entity.model.key (this, name)
+                } else if (value.length >= 2 && value [0] === '"' && value [value.length - 1] === '"') {
                     return value.substr (1, value.length - 2)
                 } else {
                     const number = _.toNumber (value)
@@ -63,13 +62,27 @@ class Block {
                         return number
                     } else {
                         const name = value
-                        return this.lookup ('atom', 'datum', name) .evaluate (this)
+                        const entity = this.lookup ('atom', 'datum', name)
+                        if (entity instanceof Entity.model.callable) {
+                            return entity
+                        } else {
+                            return entity.evaluate (this)
+                        }
                     }
                 }
+            } else if (_.isArray (value)) {
+                const [ name, ...parameter ] = value
+                return this.lookup ('list', 'macro', name) .evaluate (this, parameter)
+            } else if (value instanceof Entity.model.entity) {
+                const entity = value
+                return entity.evaluate (this)
+            } else {
+                let error = new Error (`can not evaluate [${ typeof value }] ${ value }`)
+                throw error
             }
         }) ()
-        //console.log ('[block] evaluate', value, '=>', thing)
-        return thing
+        //console.log ('[block] evaluate', value, '=>', evaluated)
+        return evaluated
     }
     lookup (order, model, name) {
         if (! (order in Entity.order.evaluate)) {

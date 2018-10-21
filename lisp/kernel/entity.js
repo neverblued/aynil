@@ -1,28 +1,52 @@
 const _ = require ('lodash')
 const Scope = require ('./scope')
-class Datum {
-    constructor (block, name, body) {
+class Entity {
+    constructor (block) {
         this.block = block
-        this.name = name
-        this.body = body
-        //console.log ('[entity] created datum', this.name, this.body)
-    }
-    evaluate () {
-        return this.body
     }
     inspect () {
         return this.toString ()
+    }
+}
+class Key extends Entity {
+    constructor (block, name) {
+        super (block)
+        this.name = name
+    }
+    evaluate () {
+        return this
+    }
+    toString () {
+        return `<K:${ _.toUpper (this.name) }>`
+    }
+}
+class Datum extends Key {
+    constructor (block, name, body) {
+        super (block, name)
+        if (! _.isUndefined (body)) {
+            this.body = block.evaluate (body)
+        }
+    }
+    evaluate () {
+        return this.body
     }
     toString () {
         return `<D:${ _.toUpper (this.name) }>`
     }
 }
-class Callable extends Datum {
-}
-class Symbol extends Callable {
+class Symbol extends Datum {
+    constructor (block, name, body) {
+        super (block, name)
+        this.body = body
+    }
+    evaluate (block) {
+        return block.evaluate (this.body)
+    }
     toString () {
         return `<S:${ _.toUpper (this.name) }>`
     }
+}
+class Callable extends Symbol {
     evaluate (block) {
         if (_.isFunction (this.body)) {
             return this.body.call (block)
@@ -30,64 +54,68 @@ class Symbol extends Callable {
             return block.evaluate (this.body)
         }
     }
+    toString () {
+        return `<C:${ _.toUpper (this.name) }>`
+    }
 }
 class Macro extends Callable {
     constructor (block, name, parameter, body) {
         super (block, name, body)
         this.parameter = parameter
-        //console.log ('[entity] created macro', this.name, this.parameter, this.body)
-    }
-    toString () {
-        return `<M:${ _.toUpper (this.name) }>`
     }
     evaluate (block, parameter) {
-        //console.log ('[entity] macro evaluate', this.name, parameter)
-        // TODO adapt this.parameter
         if (_.isFunction (this.body)) {
             return this.body.call (block, ...parameter)
         } else {
+            _.forEach (this.parameter, (name, index) => {
+                block.set ('lexical', 'datum', name, parameter [index])
+            })
             return block.evaluate (this.body)
         }
+    }
+    toString () {
+        return `<M:${ _.toUpper (this.name) }>`
     }
 }
 class Lambda extends Macro {
     constructor (block, name, parameter, body) {
         super (block, name, parameter, body)
-        //console.log ('[entity] created lambda', this.name, this.parameter, this.body)
-    }
-    toString () {
-        return `<L:${ _.toUpper (this.name) }>`
     }
     evaluate (block, parameter) {
-        //console.log ('[entity] lambda evaluate', this.name, parameter, typeof this.body)
         return block.stack (block => {
             block.scope.lexical.integrate (this.block.scope.lexical)
-            //console.log ('+2?++', block.scope.lexical)
-            parameter = _.map (parameter, value => {
-                return block.evaluate (value)
-            })
-            _.forEach (this.parameter, (name, index) => {
-                block.set ('lexical', 'datum', name, parameter [index])
-            })
             if (_.isFunction (this.body)) {
+                parameter = _.map (parameter, value => {
+                    return block.evaluate (value)
+                })
                 return this.body.call (block, ...parameter)
             } else {
+                _.forEach (this.parameter, (name, index) => {
+                    const value = parameter [index]
+                    //console.log ('[lambda] bind parameter', index, name, value)
+                    block.set ('lexical', 'datum', name, value)
+                })
                 return block.evaluate (this.body)
             }
         })
     }
+    toString () {
+        return `<L:${ _.toUpper (this.name) }>`
+    }
 }
 module.exports = {
     model: {
+        entity: Entity,
+        key: Key,
         datum: Datum,
-        callable: Callable,
         symbol: Symbol,
+        callable: Callable,
         macro: Macro,
         lambda: Lambda,
     },
     order: {
         evaluate: {
-            atom: [ 'symbol', 'datum' ],
+            atom: [ 'macro', 'lambda', 'symbol', 'datum' ],
             list: [ 'macro', 'lambda' ],
         },
         scope: [

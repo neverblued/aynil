@@ -1,31 +1,48 @@
 const _ = require ('lodash')
 module.exports = lisp => {
     lisp.set (
-        'dynamic', 'datum', 'pi',
-        Math.PI
-    )
-    lisp.set (
-        'dynamic', 'macro', 'result',
+        'dynamic', 'lambda', '.',
         [],
-        function (...all) {
-            return _.last (_.map (all, value => {
-                const thing = this.evaluate (value)
-                //console.log ('[lisp-basic] result', thing)
-                return thing
-            }))
+        function (hashtable, key) {
+            if ('name' in key) {
+                key = key.name
+            }
+            if (hashtable && key in hashtable) {
+                return hashtable [key]
+            } else {
+                return undefined
+            }
         }
     )
     lisp.set (
-        'dynamic', 'macro', 'set',
+        'dynamic', 'macro', 'call',
         [],
-        function (...bindings) {
-            //console.log ('[lisp-basic] set...')
-            const objects = _.map (bindings, ([ scope, entity, name, ...value ]) => {
-                //console.log ('[lisp-basic] set', scope, entity, name, '*value*')
-                return this.set (scope, entity, name, ...value)
+        function (callable, ...parameter) {
+            if (_.isFunction (callable)) {
+                return callable (...parameter)
+            } else if (_.isString (callable)) {
+                const entity = this.lookup ('atom', 'callable', callable)
+                return entity.evaluate (this, parameter)
+            } else {
+                const jsFunction = this.evaluate (callable)
+                if (! _.isFunction (jsFunction)) {
+                    let error = new Error ('not evaluated into function')
+                    throw error
+                }
+                const args = _.map (parameter, this.evaluate.bind (this))
+                return jsFunction.call (null, ...args)
+            }
+        }
+    )
+    lisp.set (
+        'dynamic', 'lambda', 'hashtable',
+        [],
+        function (...keysAndValues) {
+            const hashtable = {}
+            _.forEach (_.chunk (keysAndValues, 2), ([ key, value ]) => {
+                hashtable [key.name || key] = value
             })
-            //console.log ('[lisp-basic] /set')
-            return objects
+            return hashtable
         }
     )
     lisp.set (
@@ -40,23 +57,36 @@ module.exports = lisp => {
             })
         }
     )
-//    lisp.set ('dynamic', 'macro', 'lambda', function (parameter, ...body) {
-//        return this.stack (function () {
-//            this.adapt (parameter)
-//            return this.evaluate (['result', ...body])
-//        })
-//    })
-//    lisp.set ('dynamic', 'macro', 'defun', function (name, parameter, ...body) {
-//        this.set ('dynamic', 'lambda', name, function () {
-//            return this.evaluate ([ 'lambda', parameter, ...body ])
-//        })
-//    })
-//    lisp.set ('dynamic', 'macro', 'let*', function (bindings, ...body) {
-//        return this.stack (function () {
-//            _.forEach (bindings, ([ name, value ]) => {
-//                this.set ('dynamic', 'datum', name, this.evaluate (value))
-//            })
-//            return this.evaluate ([ 'result', ...body])
-//        })
-//    })
+    lisp.set (
+        'dynamic', 'macro', 'list',
+        [],
+        function (...items) {
+            return _.map (items, this.evaluate.bind (this))
+        }
+    )
+    lisp.set (
+        'dynamic', 'lambda', 'require',
+        [ 'path' ],
+        function (path) {
+            return require (path)
+        }
+    )
+    lisp.set (
+        'dynamic', 'macro', 'result',
+        [],
+        function (...all) {
+            return _.last (_.map (all, value => {
+                return this.evaluate (value)
+            }))
+        }
+    )
+    lisp.set (
+        'dynamic', 'macro', 'set',
+        [],
+        function (...bindings) {
+            return _.map (bindings, ([ scope, entity, name, ...value ]) => {
+                return this.set (scope, entity, name, ...value)
+            })
+        }
+    )
 }
