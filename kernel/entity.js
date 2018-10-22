@@ -1,20 +1,15 @@
 const _ = require ('lodash')
 const Scope = require ('./scope')
-class Entity {
-    constructor (block) {
-        this.block = block
-    }
-    inspect () {
-        return this.toString ()
-    }
-}
-class Key extends Entity {
+class Key {
     constructor (block, name) {
-        super (block)
+        this.block = block
         this.name = name
     }
     evaluate () {
         return this
+    }
+    inspect () {
+        return this.toString ()
     }
     toString () {
         return `<K:${ _.toUpper (this.name) }>`
@@ -40,14 +35,6 @@ class Symbol extends Datum {
         this.body = body
     }
     evaluate (block) {
-        return block.evaluate (this.body)
-    }
-    toString () {
-        return `<S:${ _.toUpper (this.name) }>`
-    }
-}
-class Callable extends Symbol {
-    evaluate (block) {
         if (_.isFunction (this.body)) {
             return this.body.call (block)
         } else {
@@ -55,10 +42,10 @@ class Callable extends Symbol {
         }
     }
     toString () {
-        return `<C:${ _.toUpper (this.name) }>`
+        return `<S:${ _.toUpper (this.name) }>`
     }
 }
-class Macro extends Callable {
+class Macro extends Symbol {
     constructor (block, name, parameter, body) {
         super (block, name, body)
         this.parameter = parameter
@@ -105,11 +92,9 @@ class Lambda extends Macro {
 }
 module.exports = {
     model: {
-        entity: Entity,
         key: Key,
         datum: Datum,
         symbol: Symbol,
-        callable: Callable,
         macro: Macro,
         lambda: Lambda,
     },

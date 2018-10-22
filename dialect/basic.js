@@ -1,7 +1,7 @@
 const _ = require ('lodash')
 module.exports = lisp => {
     lisp.set (
-        'dynamic', 'lambda', '.',
+        'lexical', 'lambda', '.',
         [],
         function (hashtable, key) {
             if ('name' in key) {
@@ -15,7 +15,7 @@ module.exports = lisp => {
         }
     )
     lisp.set (
-        'dynamic', 'macro', 'call',
+        'lexical', 'macro', 'call',
         [],
         function (callable, ...parameter) {
             if (_.isFunction (callable)) {
@@ -35,7 +35,14 @@ module.exports = lisp => {
         }
     )
     lisp.set (
-        'dynamic', 'lambda', 'hashtable',
+	'lexical', 'macro', 'get',
+	[ 'name', '&key', 'scope', 'entity'],
+	function (name, { scope, entity } = context) {
+	    return this.get (scope, entity, name)
+	}
+    )
+    lisp.set (
+        'lexical', 'lambda', 'hashtable',
         [],
         function (...keysAndValues) {
             const hashtable = {}
@@ -46,7 +53,7 @@ module.exports = lisp => {
         }
     )
     lisp.set (
-        'dynamic', 'macro', 'let',
+        'lexical', 'macro', 'let',
         [],
         function (bindings, ...body) {
             return this.stack (block => {
@@ -58,21 +65,21 @@ module.exports = lisp => {
         }
     )
     lisp.set (
-        'dynamic', 'macro', 'list',
+        'lexical', 'macro', 'list',
         [],
         function (...items) {
             return _.map (items, this.evaluate.bind (this))
         }
     )
     lisp.set (
-        'dynamic', 'lambda', 'require',
+        'lexical', 'lambda', 'require',
         [ 'path' ],
         function (path) {
             return require (path)
         }
     )
     lisp.set (
-        'dynamic', 'macro', 'result',
+        'lexical', 'macro', 'result',
         [],
         function (...all) {
             return _.last (_.map (all, value => {
@@ -81,7 +88,7 @@ module.exports = lisp => {
         }
     )
     lisp.set (
-        'dynamic', 'macro', 'set',
+        'lexical', 'macro', 'set',
         [],
         function (...bindings) {
             return _.map (bindings, ([ scope, entity, name, ...value ]) => {

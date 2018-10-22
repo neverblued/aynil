@@ -1,8 +1,13 @@
 const _ = require ('lodash')
 module.exports = lisp => {
     lisp.set (
-        'dynamic', 'datum', 'pi',
-        Math.PI
+        'dynamic', 'lambda', '=',
+        [],
+        function (first, ...rest) {
+            return _.every (rest, (value) => {
+                return value === first
+            })
+        }
     )
     lisp.set (
         'dynamic', 'lambda', '+',
@@ -39,5 +44,9 @@ module.exports = lisp => {
                 return total / number
             }, first)
         }
+    )
+    lisp.set (
+        'dynamic', 'datum', 'pi',
+        Math.PI
     )
 }

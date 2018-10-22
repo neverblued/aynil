@@ -1,19 +1,20 @@
 {
     "private": true,
     "name": "futulisp",
-    "version": "0.3.0",
+    "version": "0.4.0",
     "keywords": [
         "lisp",
-        "ecmascript"
+	"framework"
     ],
     "dependencies": {
         "lodash": "latest"
     },
     "devDependencies": {
-        "moment": "latest",
-        "nodemon": "latest"
+        "chai": "latest",
+        "mocha": "latest",
+        "moment": "latest"
     },
     "scripts": {
-        "start": "nodemon . --watch . --watch example/*"
+        "start": "mocha test/**/*.js"
     }
 }

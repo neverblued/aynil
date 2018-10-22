@@ -34,9 +34,9 @@ class Block {
             throw error
         }
     }
-    set (scope, entity, name, ...value) {
+    set (scope, entity, name, ...declaration) {
         this.check (scope, entity)
-        const thing = new (Entity.model [entity]) (this, name, ...value)
+        const thing = new (Entity.model [entity]) (this, name, ...declaration)
         //console.log ('[block] set', scope, entity, name, '=>', thing)
         return this.scope [scope] .set (entity, name, thing)
     }
@@ -63,7 +63,7 @@ class Block {
                     } else {
                         const name = value
                         const entity = this.lookup ('atom', 'datum', name)
-                        if (entity instanceof Entity.model.callable) {
+                        if (entity instanceof Entity.model.symbol) {
                             return entity
                         } else {
                             return entity.evaluate (this)
@@ -73,7 +73,7 @@ class Block {
             } else if (_.isArray (value)) {
                 const [ name, ...parameter ] = value
                 return this.lookup ('list', 'macro', name) .evaluate (this, parameter)
-            } else if (value instanceof Entity.model.entity) {
+            } else if (value instanceof Entity.model.key) {
                 const entity = value
                 return entity.evaluate (this)
             } else {
