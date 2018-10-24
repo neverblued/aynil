@@ -1,39 +1,71 @@
 const _ = require ('lodash')
+const debug = require ('debug') ('lisp-entity')
 const Scope = require ('./scope')
-class Key {
-    constructor (block, name) {
+
+class Entity {
+
+    constructor (block) {
         this.block = block
-        this.name = name
     }
-    evaluate () {
-        return this
-    }
+    
     inspect () {
         return this.toString ()
     }
-    toString () {
-        return `<K:${ _.toUpper (this.name) }>`
+}
+
+class Quote extends Entity {
+
+    constructor (block, value) {
+	super (block)
+	this.value = value
+    }
+
+    evaluate () {
+	return this.value
     }
 }
-class Datum extends Key {
-    constructor (block, name, body) {
-        super (block, name)
-        if (! _.isUndefined (body)) {
-            this.body = block.evaluate (body)
-        }
+
+class Key extends Entity {
+
+    constructor (block, name) {
+        super (block)
+        this.name = name
     }
+
+    evaluate () {
+        return this
+    }
+
+    toString () {
+        return `#K:${ _.toUpper (this.name) }`
+    }
+}
+
+class Datum extends Key {
+    
+    constructor (block, name, value) {
+        super (block, name)
+	if (value) {
+            this.body = block.evaluate (_.first (value))
+	}
+    }
+
     evaluate () {
         return this.body
     }
+
     toString () {
-        return `<D:${ _.toUpper (this.name) }>`
+        return `#D:${ _.toUpper (this.name) }`
     }
 }
+
 class Symbol extends Datum {
-    constructor (block, name, body) {
+    
+    constructor (block, name, value) {
         super (block, name)
-        this.body = body
+	this.body = value
     }
+
     evaluate (block) {
         if (_.isFunction (this.body)) {
             return this.body.call (block)
@@ -41,70 +73,94 @@ class Symbol extends Datum {
             return block.evaluate (this.body)
         }
     }
+
     toString () {
-        return `<S:${ _.toUpper (this.name) }>`
+        return `#S:${ _.toUpper (this.name) }`
     }
 }
+
 class Macro extends Symbol {
-    constructor (block, name, parameter, body) {
-        super (block, name, body)
+    
+    constructor (block, name, value) {
+	const [ parameter, ...body ] = value
+        super (block, name, _.isFunction (_.first (body)) ? _.first (body) : body)
         this.parameter = parameter
     }
-    evaluate (block, parameter) {
-        if (_.isFunction (this.body)) {
-            return this.body.call (block, ...parameter)
+
+    evaluate (block, parameter) { 
+	let thing
+	if (_.isFunction (this.body)) {
+	    debug ('evaluate macro "%s" function ...', this.name)
+            thing = this.body.call (block, ...parameter)
         } else {
+	    debug ('evaluate macro "%s" code ...', this.name)
             _.forEach (this.parameter, (name, index) => {
                 block.set ('lexical', 'datum', name, parameter [index])
             })
-            return block.evaluate (this.body)
+	    thing = block.evaluate ([ 'result', ...this.body ])
         }
+	debug ('/evaluate macro "%s" ==>> [typeof %s] %s', this.name, typeof thing, thing)
+	return thing
     }
+
     toString () {
-        return `<M:${ _.toUpper (this.name) }>`
+        return `#M:${ _.toUpper (this.name) }`
     }
 }
+
 class Lambda extends Macro {
-    constructor (block, name, parameter, body) {
-        super (block, name, parameter, body)
+
+    constructor (block, name, value) {
+        super (block, name, value)
     }
+    
     evaluate (block, parameter) {
+	debug ('evaluate lambda "%s" ...', this.name)
         return block.stack (block => {
+	    let thing
             block.scope.lexical.integrate (this.block.scope.lexical)
             if (_.isFunction (this.body)) {
+		debug ('evaluate lambda "%s" function ...', this.name)
                 parameter = _.map (parameter, value => {
                     return block.evaluate (value)
                 })
-                return this.body.call (block, ...parameter)
+                thing = this.body.call (block, ...parameter)
             } else {
+		debug ('evaluate lambda "%s" code ...', this.name)
                 _.forEach (this.parameter, (name, index) => {
                     const value = parameter [index]
-                    //console.log ('[lambda] bind parameter', index, name, value)
+                    debug ('lambda bind parameter: %s %s %o', index, name, value)
                     block.set ('lexical', 'datum', name, value)
                 })
-                return block.evaluate (this.body)
+		thing = block.evaluate ([ 'result', ...this.body ])
             }
+	    debug ('/evaluate lambda "%s" ==>> [typeof %s] %s', this.name, typeof thing, thing)
+	    return thing
         })
     }
+    
     toString () {
-        return `<L:${ _.toUpper (this.name) }>`
+        return `#L:${ _.toUpper (this.name) }`
     }
 }
+
 module.exports = {
+    
     model: {
-        key: Key,
         datum: Datum,
-        symbol: Symbol,
-        macro: Macro,
+	entity: Entity,
+	key: Key,
         lambda: Lambda,
+        macro: Macro,
+	quote: Quote,
+        symbol: Symbol,
     },
+    
     order: {
         evaluate: {
-            atom: [ 'macro', 'lambda', 'symbol', 'datum' ],
-            list: [ 'macro', 'lambda' ],
+            atom: [ 'symbol', 'datum', 'macro', 'lambda' ],
+            sexp: [ 'macro', 'lambda' ],
         },
-        scope: [
-            'symbol', 'datum', 'macro', 'lambda'
-        ],
+        scope: [ 'symbol', 'datum', 'macro', 'lambda' ],
     },
 }

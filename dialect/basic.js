@@ -1,10 +1,14 @@
 const _ = require ('lodash')
+const fs = require ('fs')
+const path = require ('path')
+
 module.exports = lisp => {
+    
     lisp.set (
-        'lexical', 'lambda', '.',
+        'dynamic', 'lambda', '.',
         [],
         function (hashtable, key) {
-            if ('name' in key) {
+            if (_.isObject (key) && 'name' in key) {
                 key = key.name
             }
             if (hashtable && key in hashtable) {
@@ -14,35 +18,52 @@ module.exports = lisp => {
             }
         }
     )
+    
     lisp.set (
-        'lexical', 'macro', 'call',
+        'dynamic', 'lambda', 'apply',
         [],
-        function (callable, ...parameter) {
-            if (_.isFunction (callable)) {
-                return callable (...parameter)
-            } else if (_.isString (callable)) {
-                const entity = this.lookup ('atom', 'callable', callable)
-                return entity.evaluate (this, parameter)
-            } else {
-                const jsFunction = this.evaluate (callable)
-                if (! _.isFunction (jsFunction)) {
-                    let error = new Error ('not evaluated into function')
-                    throw error
-                }
-                const args = _.map (parameter, this.evaluate.bind (this))
-                return jsFunction.call (null, ...args)
-            }
+        function (callable, parameter) {
+	    return this.run (callable, parameter)
         }
     )
+    
     lisp.set (
-	'lexical', 'macro', 'get',
+        'dynamic', 'lambda', 'call',
+        [],
+        function (callable, ...parameter) {
+	    return this.run (callable, ...parameter)
+        }
+    )
+    
+    lisp.set (
+        'dynamic', 'lambda', 'equal',
+        [],
+        function (first, ...rest) {
+	    return _.every (rest, thing => {
+		return _.isEqual (thing, first)
+	    })
+        }
+    )
+
+    lisp.set (
+	'dynamic', 'lambda', 'evaluate',
+	[ 'value' ],
+	function (value) {
+	    return this.evaluate (value)
+	}
+    )
+
+    lisp.set (
+	'dynamic', 'macro', 'get',
 	[ 'name', '&key', 'scope', 'entity'],
-	function (name, { scope, entity } = context) {
+	function (name, context) {
+	    const { scope, entity } = context
 	    return this.get (scope, entity, name)
 	}
     )
+    
     lisp.set (
-        'lexical', 'lambda', 'hashtable',
+        'dynamic', 'lambda', 'hashtable',
         [],
         function (...keysAndValues) {
             const hashtable = {}
@@ -52,48 +73,90 @@ module.exports = lisp => {
             return hashtable
         }
     )
+    
     lisp.set (
-        'lexical', 'macro', 'let',
+        'dynamic', 'macro', 'key',
+        [ 'name' ],
+        function (name) {
+            return this.evaluate (`:${ name }`)
+        }
+    )
+    
+    lisp.set (
+        'dynamic', 'macro', 'let',
         [],
-        function (bindings, ...body) {
+        function (scopes, ...body) {
             return this.stack (block => {
-                _.forEach (bindings, ([ scope, entity, name, ...value ]) => {
-                    block.set (scope, entity, name, ...value)
-                })
+		_.forEach (scopes, ([ scope, ...bindings ]) => {
+		    _.forEach (bindings, ([ entity, name, ...value ]) => {
+			block.set (scope, entity, name, ...value)
+		    })
+		})
                 return block.evaluate ([ 'result', ...body])
             })
         }
     )
+    
     lisp.set (
-        'lexical', 'macro', 'list',
+        'dynamic', 'lambda', 'list',
         [],
         function (...items) {
-            return _.map (items, this.evaluate.bind (this))
+	    return items
         }
     )
+    
     lisp.set (
-        'lexical', 'lambda', 'require',
-        [ 'path' ],
-        function (path) {
-            return require (path)
-        }
-    )
-    lisp.set (
-        'lexical', 'macro', 'result',
+        'dynamic', 'macro', 'quote',
         [],
-        function (...all) {
-            return _.last (_.map (all, value => {
-                return this.evaluate (value)
+        function (value) {
+	    return value
+	    //return this.quote (value) .evaluate (this)
+        }
+    )
+    
+    lisp.set (
+        'dynamic', 'lambda', 'require',
+        [ 'source' ],
+        function (source) {
+	    if (source [0] === '.') {
+		const dirname = this.evaluate ('*dirname*')
+		source = `${ dirname }/${ source }`
+	    } else if (source [0] !== '/') {
+		const dirname = this.evaluate ('*dirname*')
+		let dir = dirname
+		while (! fs.existsSync (dir + '/node_modules')) {
+		    dir = path.resolve (dir, '..')
+		    if (dir === '/') {
+			let error = new Error (`bad require source ${ source }`)
+			throw error
+		    }
+		}
+		source = `${ dir }/node_modules/${ source }`
+	    }
+            return require (source)
+        }
+    )
+    
+    lisp.set (
+        'dynamic', 'macro', 'result',
+        [],
+        function (...program) {
+            return _.last (_.map (program, expression => {
+                return this.evaluate (expression)
             }))
         }
     )
+    
     lisp.set (
-        'lexical', 'macro', 'set',
+        'dynamic', 'macro', 'set',
         [],
-        function (...bindings) {
-            return _.map (bindings, ([ scope, entity, name, ...value ]) => {
-                return this.set (scope, entity, name, ...value)
-            })
+        function (...scopes) {
+            return _.flatten (_.map (scopes, ([ scope, ...bindings ]) => {
+		return _.map (bindings, ([ entity, name, ...value ]) => {
+                    return this.set (scope, entity, name, ...value)
+		})
+            }))
         }
     )
+
 }

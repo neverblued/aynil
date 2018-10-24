@@ -46,7 +46,7 @@ module.exports = lisp => {
         }
     )
     lisp.set (
-        'dynamic', 'datum', 'pi',
+        'dynamic', 'symbol', 'pi',
         Math.PI
     )
 }

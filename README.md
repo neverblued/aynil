@@ -1,52 +1,56 @@
 FutuLisp
 ========
 
-FutuLisp is a Lisp-on-JavaScript framework
-ready for web development
-while keeping it simply stupid.
+JavaScript framework for hacking the future.
 
 
-Usage
------
+Usage tips
+----------
 
-#### Install
+#### Apply
 
-```
-npm i futulisp
+```javascript
+require ('futulisp') (__dirname + '/hello-world.lisp')
 ```
 
-#### Test
+#### Enjoy
 
+```lisp
+(let ((lexical (datum hi "Hello")
+               (lambda say-hi (name)
+		         (print hi "," name "!"))))
+  (say-hi "world"))
 ```
+
+#### Use another file
+
+You may require lisp source files which are located either absolutely and relatively to the current code:
+
+```lisp
+(require (+ *dirname* "/component.lisp"))
+(require "./component.lisp")
+```
+
+#### Use any node module
+
+This also works:
+
+```lisp
+(set (dynamic (datum _ (require "lodash"))))
+(+ 2 3 4
+   (call (. _ :sum)
+	     (list 10 11 12)))
+```
+
+#### Test examples
+
+```bash
 npm start
 ```
 
-#### Require
 
-```
-require ('lisp') (__dirname + '/application.lisp')
-```
-
-
-Syntax
-------
-
-#### Binding
-
-All bindings have explicit syntax:
-```
-Binding = Scope Entity Name Declaration {Declaration}
-```
-
-Depending on the entity,
-one declaration item may represent a datum value or a symbol body.
-In the case of complex callables,
-first of the multiple declarations represents formal parameters
-while rest is implicitly computed as a body of the called entity.
-
-```
-Declaration = Value | Body | Parameter Body {Body}
-```
+Syntax tips
+-----------
 
 #### Scope
 
@@ -59,10 +63,45 @@ Declaration = Value | Body | Parameter Body {Body}
 * Datum — evaluates in the declaration environment
 * Symbol — may be called and evaluates in the call environment
 * Lambda — accepts evaluated call parameters and creates a lexical closure
-* Macro — the parameters may be evaluated manually and no closure is created
+* Macro — parameters may be evaluated manually and no closure is created
+
+#### Binding
+
+Depending on the entity,
+one value item may represent a datum value or a symbol body.
+In case of callable entities that accept arguments,
+first of the multiple values should represent formal parameters,
+as in Common Lisp:
+
+```
+Value = "(" ( Primitive | Body | Parameter Body {Body} ) ")"
+```
+
+Syntax of defining entities is also similar to that in CL:
+
+```
+Definition = "(" Entity Name Value {Value} ")"
+```
+
+But the following way of explicitly handling scopes is different:
+
+```
+Binding = "(" Scope "(" Definition {Definition} ")" ")"
+```
+
+Main forms:
+
+```
+"(" "let" "(" Binding {Binding} ")" Body ")"
+"(" "set" Binding {Binding} ")"
+```
 
 
-P.S.
-----
+Future plans
+------------
 
-Future belongs to lispers!
+* Processing parameters
+* Bundler plugins
+* Signal system
+* Object system
+* ...
