@@ -1,5 +1,8 @@
 const _ = require ('lodash')
+const fs = require ('fs')
+const path = require ('path')
 const debug = require ('debug') ('lisp-block')
+
 const Entity = require ('./entity')
 const Scope = require ('./scope')
 
@@ -76,7 +79,7 @@ class Block {
         this.check (scope, entity)
         return this.scope [scope] .get (entity, name)
     }
-    
+
     lookup (order, model, name) {
         if (! (order in Entity.order.evaluate)) {
             let error = new Error (`bad order ${ order }`)
@@ -98,6 +101,25 @@ class Block {
         return thing
     }
 
+    path (source) {
+	let resolved
+	if (source [0] === '.') {
+	    let folder = this.evaluate ('*dirname*')
+	    resolved = `${ folder }/${ source }`
+	} else if (source [0] !== '/') {
+	    let folder = this.evaluate ('*dirname*')
+	    while (! fs.existsSync (folder + '/node_modules')) {
+		folder = path.resolve (folder, '..')
+		if (folder === '/') {
+		    let error = new Error (`bad source path "${ source }"`)
+		    throw error
+		}
+	    }
+	    resolved = `${ folder }/node_modules/${ source }`
+	}
+	return resolved
+    }
+    
     quote (value) {
 	return new Entity.model.quote (this, value)
     }

@@ -1,7 +1,7 @@
 {
     "private": true,
     "name": "futulisp",
-    "version": "0.5.0",
+    "version": "0.6.0",
     "keywords": [
         "lisp",
         "framework"
@@ -15,7 +15,6 @@
         "mocha": "latest"
     },
     "scripts": {
-        "debug": "DEBUG=lisp-* mocha test/*.js",
         "start": "mocha test/*.js"
     }
 }

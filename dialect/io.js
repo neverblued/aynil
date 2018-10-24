@@ -4,8 +4,9 @@ module.exports = lisp => {
         'dynamic', 'lambda', 'print',
         [],
         function (...all) {
-            const log = console.log
-            log.apply (log, [ '  =>', ...all ])
+	    const message = _.join (all, '')
+            console.log ('  =>' + message)
+	    return message
         }
     )
 }

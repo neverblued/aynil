@@ -1,16 +1,16 @@
 const expect = require ('chai') .expect
 const lisp = require ('..')
-describe ('basic features', function () {
-    it ('evaluate quote into not evaluated source value', function () {
-	expect (lisp (__dirname + '/basic-quote-evaluate.lisp')) .equal (true)
+describe ('basic use case', function () {
+    it ('operates hashtables via key symbols and the dot accessor', function () {
+	expect (lisp (__dirname + '/hashtable.lisp')) .equal (true)
     })
-    it ('use native array for a list', function () {
-	expect (lisp (__dirname + '/basic-list.lisp')) .equal (true)
+    it ('creates a lexical closure for lambda definition environment', function () {
+	expect (lisp (__dirname + '/lexical-closure.lisp')) .equal (true)
     })
-    it ('operate hashtables via ":NAME" key entities and "." accessor', function () {
-	expect (lisp (__dirname + '/basic-hashtable.lisp')) .equal (true)
+    it ('represents list as native array', function () {
+	expect (lisp (__dirname + '/list.lisp')) .equal (true)
     })
-    it ('create a lexical closure for lambda declaration environment', function () {
-	expect (lisp (__dirname + '/basic-lexical-closure.lisp')) .equal (true)
+    it ('evaluates quote into not evaluated source value', function () {
+	expect (lisp (__dirname + '/quote-evaluate.lisp')) .equal (true)
     })
 })

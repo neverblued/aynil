@@ -54,27 +54,33 @@ Syntax tips
 
 #### Scope
 
-* Lexical
-* Dynamic
+* `Lexical` — from source code topology
+* `Dynamic` — from execution history
+
+You may define bindings in both scopes using both methods `let` and `set`.
+Method `let` has a body for code where the bindings should be usable
+and creates a new `Block` on the stack.
+The `set` method has no "body" and consumes the closest outer stack `Block`.
 
 #### Entity
 
-* Key — evaluates to itself
-* Datum — evaluates in the declaration environment
-* Symbol — may be called and evaluates in the call environment
-* Lambda — accepts evaluated call parameters and creates a lexical closure
-* Macro — parameters may be evaluated manually and no closure is created
+* `Key` — evaluates to itself
+* `Datum` — evaluates in the declaration environment
+* `Symbol` — may be called and evaluates in the call environment
+* `Lambda` — accepts evaluated call parameters and creates a lexical closure
+* `Macro` — parameters may be evaluated manually and no closure is created
 
 #### Binding
 
-Depending on the entity,
-one value item may represent a datum value or a symbol body.
-In case of callable entities that accept arguments,
-first of the multiple values should represent formal parameters,
-as in Common Lisp:
+Value definition of atomic entities (`Quote`, `Key`, `Datum` and `Symbol`) 
+consists of a single expression.
+Entities that accept call arguments (`Macro` and `Lambda`) 
+take the first definition argument as self parameters,
+while rest code forms the call result.
+This is similar to Common Lisp:
 
 ```
-Value = "(" ( Primitive | Body | Parameter Body {Body} ) ")"
+Value = "(" ( Body | Parameter Body {Body} ) ")"
 ```
 
 Syntax of defining entities is also similar to that in CL:

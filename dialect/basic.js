@@ -1,6 +1,4 @@
 const _ = require ('lodash')
-const fs = require ('fs')
-const path = require ('path')
 
 module.exports = lisp => {
     
@@ -75,6 +73,14 @@ module.exports = lisp => {
     )
     
     lisp.set (
+        'dynamic', 'lambda', 'import',
+        [ 'source' ],
+        function (source) {
+            return require ('..') (this.path (source))
+        }
+    )
+    
+    lisp.set (
         'dynamic', 'macro', 'key',
         [ 'name' ],
         function (name) {
@@ -118,22 +124,7 @@ module.exports = lisp => {
         'dynamic', 'lambda', 'require',
         [ 'source' ],
         function (source) {
-	    if (source [0] === '.') {
-		const dirname = this.evaluate ('*dirname*')
-		source = `${ dirname }/${ source }`
-	    } else if (source [0] !== '/') {
-		const dirname = this.evaluate ('*dirname*')
-		let dir = dirname
-		while (! fs.existsSync (dir + '/node_modules')) {
-		    dir = path.resolve (dir, '..')
-		    if (dir === '/') {
-			let error = new Error (`bad require source ${ source }`)
-			throw error
-		    }
-		}
-		source = `${ dir }/node_modules/${ source }`
-	    }
-            return require (source)
+            return require (this.path (source))
         }
     )
     
