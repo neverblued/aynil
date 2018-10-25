@@ -1,5 +1,5 @@
 (set (lexical (datum _
-		     (require "lodash"))
+		     (require "lodash" :js))
 	      
 	      (lambda _ (tool args)
 		(apply (. _ tool) args))))

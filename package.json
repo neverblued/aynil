@@ -1,7 +1,6 @@
 {
-    "private": true,
-    "name": "futulisp",
-    "version": "0.6.0",
+    "name": "lispingout",
+    "version": "0.6.1",
     "keywords": [
         "lisp",
         "framework"

@@ -129,7 +129,7 @@ class Lambda extends Macro {
 		debug ('evaluate lambda "%s" code ...', this.name)
                 _.forEach (this.parameter, (name, index) => {
                     const value = parameter [index]
-                    debug ('lambda bind parameter: %s %s %o', index, name, value)
+                    debug ('lambda bind parameter: %s "%s" %o', index, name, value)
                     block.set ('lexical', 'datum', name, value)
                 })
 		thing = block.evaluate ([ 'result', ...this.body ])
@@ -137,6 +137,14 @@ class Lambda extends Macro {
 	    debug ('/evaluate lambda "%s" ==>> [typeof %s] %s', this.name, typeof thing, thing)
 	    return thing
         })
+    }
+
+    evaluator (block) {
+	return (...args) => {
+	    return this.evaluate (block, _.map (args, arg => {
+		return block.quote (arg)
+	    }))
+	}
     }
     
     toString () {

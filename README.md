@@ -1,16 +1,25 @@
-FutuLisp
-========
+((( LispingOut )))
+==================
 
-JavaScript framework for hacking the future.
+Proud to have
+[sexps](https://en.wikipedia.org/wiki/S-expression "S-expression")
+the right way!
+`λ.λ`
 
 
-Usage tips
-----------
+Get Started
+-----------
+
+#### Test
+
+```bash
+$ npm start
+```
 
 #### Apply
 
 ```javascript
-require ('futulisp') (__dirname + '/hello-world.lisp')
+require ('lispingout') (__dirname + '/test/hello-world.lisp')
 ```
 
 #### Enjoy
@@ -18,39 +27,60 @@ require ('futulisp') (__dirname + '/hello-world.lisp')
 ```lisp
 (let ((lexical (datum hi "Hello")
                (lambda say-hi (name)
-		         (print hi "," name "!"))))
+                 (+ hi ", " name "!"))))
   (say-hi "world"))
 ```
 
-#### Use another file
 
-You may require lisp source files which are located either absolutely and relatively to the current code:
+Usage Tips
+----------
+
+### Integration
+
+You may `require` application-specific and vendor lisp source files
+which are located either absolutely and relatively to the current code.
+The following two expressions are equal:
 
 ```lisp
 (require (+ *dirname* "/component.lisp"))
 (require "./component.lisp")
 ```
 
-#### Use any node module
-
-This also works:
+As well you may transparently `require` into your lisp
+either local JavaScript files or any node modules:
 
 ```lisp
-(set (dynamic (datum _ (require "lodash"))))
+(set (dynamic (datum _ (require "lodash" :js))))
 (+ 2 3 4
    (call (. _ :sum)
 	     (list 10 11 12)))
 ```
 
-#### Test examples
 
-```bash
-npm start
-```
+### Model
 
+#### Entity
 
-Syntax tips
------------
+Entities support different evaluation strategies:
+
+* `Quote` — does not evaluate
+* `Key` — evaluates to itself
+* `Datum` — evaluates in the declaration environment
+* `Symbol` — evaluates in the call environment
+* `Lambda` — accepts evaluated call arguments and creates a lexical closure
+* `Macro` — arguments may be evaluated manually and no closure is created
+
+Entities form two groups by their ability to execute:
+
+* May execute — `Macro`, `Lambda` and `Symbol`
+* Just hold value — `Datum` and `Key`
+
+Entities also form two groups by their ability to take arguments
+during execution:
+
+* Take arguments — `Macro` and `Lambda` 
+* Do not take — `Key`, `Datum` and `Symbol`
+
 
 #### Scope
 
@@ -58,17 +88,6 @@ Syntax tips
 * `Dynamic` — from execution history
 
 You may define bindings in both scopes using both methods `let` and `set`.
-Method `let` has a body for code where the bindings should be usable
-and creates a new `Block` on the stack.
-The `set` method has no "body" and consumes the closest outer stack `Block`.
-
-#### Entity
-
-* `Key` — evaluates to itself
-* `Datum` — evaluates in the declaration environment
-* `Symbol` — may be called and evaluates in the call environment
-* `Lambda` — accepts evaluated call parameters and creates a lexical closure
-* `Macro` — parameters may be evaluated manually and no closure is created
 
 #### Binding
 
@@ -89,18 +108,22 @@ Syntax of defining entities is also similar to that in CL:
 Definition = "(" Entity Name Value {Value} ")"
 ```
 
-But the following way of explicitly handling scopes is different:
+But the following explicit scope notation is different:
 
 ```
 Binding = "(" Scope "(" Definition {Definition} ")" ")"
 ```
 
-Main forms:
+Main binding expressions syntax:
 
 ```
 "(" "let" "(" Binding {Binding} ")" Body ")"
 "(" "set" Binding {Binding} ")"
 ```
+
+Macro `let` has a body for code where the bindings should be usable
+and creates a new `Block` on the stack.
+The `set` macro has no "body" and consumes the closest outer stack `Block`.
 
 
 Future plans
@@ -111,3 +134,10 @@ Future plans
 * Signal system
 * Object system
 * ...
+* *PROFIT!!!!!!!*
+
+
+Licence
+-------
+
+TODO

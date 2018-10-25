@@ -73,14 +73,6 @@ module.exports = lisp => {
     )
     
     lisp.set (
-        'dynamic', 'lambda', 'import',
-        [ 'source' ],
-        function (source) {
-            return require ('..') (this.path (source))
-        }
-    )
-    
-    lisp.set (
         'dynamic', 'macro', 'key',
         [ 'name' ],
         function (name) {
@@ -122,9 +114,15 @@ module.exports = lisp => {
     
     lisp.set (
         'dynamic', 'lambda', 'require',
-        [ 'source' ],
-        function (source) {
-            return require (this.path (source))
+        [ 'source', 'type' ],
+        function (source, mode) {
+	    const type = mode && mode.name
+	    source = this.path (source, type)
+	    if (type === 'js') {
+		return require (source)
+	    } else {
+		return require ('..') (source)
+	    }
         }
     )
     

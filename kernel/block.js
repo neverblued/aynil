@@ -53,8 +53,8 @@ class Block {
                 } else {
                     const name = value
                     const entity = this.lookup ('atom', 'datum', name)
-                    if (entity instanceof Entity.model.symbol) {
-                        thing = entity
+                    if (entity instanceof Entity.model.macro) {
+                        thing = entity.evaluator (this)
                     } else {
                         thing = entity.evaluate (this)
                     }
@@ -101,7 +101,7 @@ class Block {
         return thing
     }
 
-    path (source) {
+    path (source, type = 'lisp') {
 	let resolved
 	if (source [0] === '.') {
 	    let folder = this.evaluate ('*dirname*')
@@ -117,10 +117,18 @@ class Block {
 	    }
 	    resolved = `${ folder }/node_modules/${ source }`
 	}
+	if (fs.existsSync (resolved)) {
+	    if (fs.statSync (resolved) .isDirectory ()) {
+		resolved += `/index.${ type }`
+	    }
+	} else {
+	    resolved += `.${ type }`
+	}
 	return resolved
     }
     
     quote (value) {
+	debug ('quote [typeof %s] %o', typeof value, value)
 	return new Entity.model.quote (this, value)
     }
     
@@ -128,20 +136,21 @@ class Block {
 	debug ('run [typeof %s] %s (%o) ...', typeof callable, callable, parameter)
         if (_.isFunction (callable)) {
 	    const jsFunction = callable
-	    debug ('run function: %s', callable)
+	    debug ('run function: %s', jsFunction)
             return jsFunction (...parameter)
+        } else if (callable instanceof Entity.model.macro) {
+	    const entity = callable
+	    debug ('run entity: %s', entity)
+            return entity.evaluate (this, _.map (parameter, arg => {
+		return this.quote (arg)
+	    }))
         } else if (_.isString (callable)) {
-            const entity = this.lookup ('atom', 'callable', callable)
-	    debug ('run atom: %s', callable)
+            const entity = this.lookup ('atom', 'symbol', callable)
+	    debug ('run atom: %s', entity)
             return entity.evaluate (this, parameter)
         } else {
-            const jsFunction = this.evaluate (callable)
-            if (! _.isFunction (jsFunction)) {
-                let error = new Error ('not evaluated into function')
-                throw error
-            }
-	    debug ('run: %s', callable)
-            return jsFunction (...parameter)
+            let error = new Error ('not evaluated into function')
+            throw error
         }
     }
 

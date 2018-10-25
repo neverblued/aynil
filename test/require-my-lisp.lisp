@@ -1,5 +1,5 @@
 (equal (+ "People say '"
-	  (import "./hello-world.lisp")
+	  (require "./hello-world.lisp")
 	  "' and smile.")
        
        "People say 'Hello, world!' and smile.")

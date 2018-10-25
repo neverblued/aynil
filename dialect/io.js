@@ -5,7 +5,9 @@ module.exports = lisp => {
         [],
         function (...all) {
 	    const message = _.join (all, '')
-            console.log ('  =>' + message)
+            console.log (`
+    @=> ${ message }
+`)
 	    return message
         }
     )
