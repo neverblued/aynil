@@ -1,6 +1,9 @@
 const expect = require ('chai') .expect
 const lisp = require ('..')
 describe ('lambda features', function () {
+    it ('support standard parameter syntax', function () {
+	expect (lisp (__dirname + '/parameter.lisp')) .equal (true)
+    })
     it ('support passing lambda as argument to native function', function () {
 	expect (lisp (__dirname + '/argument-lambda.lisp')) .equal (true)
     })

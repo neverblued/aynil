@@ -114,23 +114,40 @@ class Lambda extends Macro {
         super (block, name, value)
     }
     
-    evaluate (block, parameter) {
+    evaluate (block, args) {
 	debug ('evaluate lambda "%s" ...', this.name)
         return block.stack (block => {
 	    let thing
             block.scope.lexical.integrate (this.block.scope.lexical)
             if (_.isFunction (this.body)) {
 		debug ('evaluate lambda "%s" function ...', this.name)
-                parameter = _.map (parameter, value => {
+                thing = this.body.apply (block, _.map (args, value => {
                     return block.evaluate (value)
-                })
-                thing = this.body.call (block, ...parameter)
+                }))
             } else {
 		debug ('evaluate lambda "%s" code ...', this.name)
-                _.forEach (this.parameter, (name, index) => {
-                    const value = parameter [index]
-                    debug ('lambda bind parameter: %s "%s" %o', index, name, value)
-                    block.set ('lexical', 'datum', name, value)
+		const parameter = this.parameter
+		let modeKey = false
+		let modeOptional = false
+		let modeRest = false
+		let indexArg = 0
+                _.every (parameter, (nameParam, indexParam) => {
+		    if (nameParam === '&rest') {
+			modeRest = true
+			return true
+		    }
+		    let valueArg
+		    if (modeRest) {
+			valueArg = _.concat ([ 'list' ], _.slice (args, indexArg))
+		    } else {
+			valueArg = args [indexArg ++]
+		    }
+                    debug ('accept argument: №%d "%s" = [typeof %s] %o', indexParam, nameParam, typeof valueArg, valueArg)
+                    block.set ('lexical', 'datum', nameParam, valueArg)
+		    if (modeRest) {
+			return false
+		    }
+		    return true
                 })
 		thing = block.evaluate ([ 'result', ...this.body ])
             }

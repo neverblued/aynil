@@ -1,9 +1,7 @@
 (set (lexical (datum _
-		     (require "lodash" :js))
-	      
-	      (lambda _ (tool args)
-		(apply (. _ tool) args))))
+		     (require "lodash" :js))))
 
-(= 42
-   (+ 2 3 4
-      (_ :sum (list 10 11 12))))
+(= (+ 2 3 4
+      (call (. _ :sum)
+	    (list 10 11 12)))
+   42)

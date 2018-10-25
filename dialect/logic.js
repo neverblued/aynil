@@ -16,6 +16,18 @@ module.exports = lisp => {
 	'dynamic', 'datum', 'false',
 	false
     )
+
+    lisp.set (
+	'dynamic', 'macro', 'if',
+	[ 'clause', 'positive', 'negative' ],
+	function (clause, positive, negative) {
+	    if (this.evaluate (clause)) {
+		return this.evaluate (positive)
+	    } else {
+		return this.evaluate (negative)
+	    }
+	}
+    )
     
     lisp.set (
 	'dynamic', 'lambda', 'not',
@@ -38,6 +50,30 @@ module.exports = lisp => {
     lisp.set (
 	'dynamic', 'datum', 'true',
 	true
+    )
+
+    lisp.set (
+	'dynamic', 'macro', 'when',
+	[ 'clause', '&rest', 'things' ],
+	function (clause, ...things) {
+	    if (this.evaluate (clause)) {
+		return this.evaluate ([ 'result', ...things ])
+	    } else {
+		return undefined
+	    }
+	}
+    )
+
+    lisp.set (
+	'dynamic', 'macro', 'unless',
+	[ 'clause', '&rest', 'things' ],
+	function (clause, ...things) {
+	    if (this.evaluate (clause)) {
+		return undefined
+	    } else {
+		return this.evaluate ([ 'result', ...things ])
+	    }
+	}
     )
     
 }

@@ -18,11 +18,11 @@ class Block {
 
     check (scope, entity) {
         if (! (scope in Scope.model)) {
-            let error = new Error (`bad scope ${ scope }`)
+            let error = new Error (`bad scope "${ scope }"`)
             throw error
         }
         if (! (entity in Entity.model)) {
-            let error = new Error (`bad entity ${ entity }`)
+            let error = new Error (`bad entity "${ entity }"`)
             throw error
         }
     }
@@ -97,7 +97,7 @@ class Block {
             let error = new Error (`bad ${ model } ${ name } => ${ exhibit }`)
             throw error
         }
-        debug ('lookup: %s %s %s ==>> %s %s', order, model, name, typeof thing, thing)
+        debug ('lookup: %s %s "%s" ==>> %s %s', order, model, name, typeof thing, thing)
         return thing
     }
 
@@ -132,24 +132,24 @@ class Block {
 	return new Entity.model.quote (this, value)
     }
     
-    run (callable, ...parameter) {
-	debug ('run [typeof %s] %s (%o) ...', typeof callable, callable, parameter)
+    run (callable, ...args) {
+	debug ('run [typeof %s] %s (%o) ...', typeof callable, callable, args)
         if (_.isFunction (callable)) {
 	    const jsFunction = callable
 	    debug ('run function: %s', jsFunction)
-            return jsFunction (...parameter)
+            return jsFunction (...args)
         } else if (callable instanceof Entity.model.macro) {
 	    const entity = callable
 	    debug ('run entity: %s', entity)
-            return entity.evaluate (this, _.map (parameter, arg => {
+            return entity.evaluate (this, _.map (args, arg => {
 		return this.quote (arg)
 	    }))
         } else if (_.isString (callable)) {
             const entity = this.lookup ('atom', 'symbol', callable)
 	    debug ('run atom: %s', entity)
-            return entity.evaluate (this, parameter)
+            return entity.evaluate (this, args)
         } else {
-            let error = new Error ('not evaluated into function')
+            let error = new Error (`can not run "${ callable }"`)
             throw error
         }
     }

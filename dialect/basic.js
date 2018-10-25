@@ -20,16 +20,16 @@ module.exports = lisp => {
     lisp.set (
         'dynamic', 'lambda', 'apply',
         [],
-        function (callable, parameter) {
-	    return this.run (callable, parameter)
+        function (callable, args) {
+	    return this.run (callable, args)
         }
     )
     
     lisp.set (
         'dynamic', 'lambda', 'call',
         [],
-        function (callable, ...parameter) {
-	    return this.run (callable, ...parameter)
+        function (callable, ...args) {
+	    return this.run (callable, ...args)
         }
     )
     
