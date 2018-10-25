@@ -1,4 +1,7 @@
 *~
+*#
+#*
+.#*
 .tern-port
 flymd.*
 node_modules
