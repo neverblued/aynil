@@ -1,9 +1,10 @@
 {
-    "name": "lispingout",
-    "version": "0.7.0",
+    "name": "aynil",
+    "version": "0.8.0",
     "keywords": [
-        "lisp",
-        "framework"
+	"virtual",
+	"lisp",
+        "machine"
     ],
     "dependencies": {
         "lodash": "latest"
@@ -14,6 +15,6 @@
         "mocha": "latest"
     },
     "scripts": {
-        "start": "mocha test/*.js"
+        "start": "./node_modules/.bin/mocha test"
     }
 }

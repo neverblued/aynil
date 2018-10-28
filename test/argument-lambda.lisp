@@ -1,7 +1,4 @@
-(let ((lexical (datum _
-		      (require "lodash" :js))
-	       
-	       (datum items
+(let ((lexical (datum items
 		      (list "AAA" "BBB" "CCC"))
 	       
 	       (lambda foo (item)

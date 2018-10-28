@@ -1,16 +1,13 @@
-((( LispingOut )))
-==================
+((( All You Need Is Lisp )))
+============================
 
-For having
-[sexps](https://en.wikipedia.org/wiki/S-expression "S-expressions")
-is never enough!
 `λ.λ`
 
 
 Overview
 --------
 
-JavaScript framework that turns your Node into a lisp machine.
+This framework turns your Node into a virtual lisp machine.
 
 
 Usage
@@ -25,7 +22,7 @@ $ npm start
 #### 2. Apply
 
 ```javascript
-require ('lispingout') (__dirname + '/test/hello-world.lisp')
+require ('aynil') (__dirname + '/test/hello-world.lisp')
 ```
 
 #### 3. Enjoy
@@ -52,8 +49,8 @@ The following two expressions are equal:
 (require "./component.lisp")
 ```
 
-As well you may transparently `require` into your lisp
-either local JavaScript files or any node modules:
+As well, you may `require` into your lisp runtime
+either application-specific JavaScript files or any node modules:
 
 ```lisp
 (set (dynamic (datum _ (require "lodash" :js))))
@@ -62,46 +59,28 @@ either local JavaScript files or any node modules:
 	     (list 10 11 12)))
 ```
 
+### The Dialect
 
-### Model Concepts
+#### Parameter
 
-#### Entity
+Common Lisp style of formal parameter definition is supported.
+You may use special tokens `&optional`, `&key` and `&rest`.
 
-Entities support different evaluation strategies:
+In CL if you define both `&key` and `&rest` parameters,
+you always get the keys included into rest.
+However, this framework supports more user-friendly behaviour.
+The parameters are processed exactly as you define:
 
-* `Quote` — does not evaluate
-* `Key` — evaluates to itself
-* `Datum` — evaluates in the declaration environment
-* `Symbol` — evaluates in the call environment
-* `Lambda` — accepts evaluated call arguments and creates a lexical closure
-* `Macro` — arguments may be evaluated manually and no closure is created
-
-Entities form two groups by their ability to execute:
-
-* May execute — `Macro`, `Lambda` and `Symbol`
-* Just hold value — `Datum` and `Key`
-
-Entities also form two groups by their ability to take arguments
-during execution:
-
-* Take arguments — `Macro` and `Lambda` 
-* Do not take — `Key`, `Datum` and `Symbol`
-
-
-#### Scope
-
-* `Lexical` — from source code topology
-* `Dynamic` — from execution history
-
-You may define bindings in both scopes using both methods `let` and `set`.
+```lisp
+```
 
 #### Binding
 
-Value definition of atomic entities (`Quote`, `Key`, `Datum` and `Symbol`) 
-consists of a single expression.
+Atomic entities' (`Quote`, `Key`, `Datum` and `Symbol`)
+value definition consists of a single expression.
 Entities that accept call arguments (`Macro` and `Lambda`) 
-take the first definition argument as self parameters,
-while rest code forms the call result.
+take the first definition form as the formal parameter,
+while rest forms are evaluated as the call result.
 This is similar to Common Lisp:
 
 ```
@@ -132,10 +111,42 @@ and creates a new `Block` on the stack.
 The `set` macro has no "body" and consumes the closest outer stack `Block`.
 
 
+### Kernel Concepts
+
+#### Entity
+
+The entities support different evaluation strategies:
+
+* `Quote` — does not evaluate
+* `Key` — evaluates to itself
+* `Datum` — evaluates in the declaration environment
+* `Symbol` — evaluates in the call environment
+* `Lambda` — accepts evaluated call arguments and creates a lexical closure
+* `Macro` — arguments may be evaluated manually and no closure is created
+
+Entities form two groups by their ability to execute:
+
+* May execute — `Macro`, `Lambda` and `Symbol`
+* Just hold value — `Datum` and `Key`
+
+Entities also form two groups by their ability to take arguments
+during execution:
+
+* Take arguments — `Macro` and `Lambda` 
+* Do not take — `Key`, `Datum` and `Symbol`
+
+
+#### Scope
+
+* `Lexical` — from source code topology
+* `Dynamic` — from execution history
+
+You may define bindings in both scopes using both methods `let` and `set`.
+
+
 Future Plans
 ------------
 
-* Processing parameters
 * Bundler plugins
 * Signal system
 * Object system
@@ -145,6 +156,10 @@ Future Plans
 
 Change Log
 ----------
+
+#### v.0.8.0
+
+* Support `&optional` and `&key` parameters for `Lambda`.
 
 #### v.0.7.0
 
@@ -157,12 +172,12 @@ Licence
 
 Copyright &copy; 2018
 [Dmytro Pinskyi](http://neverblued.info/)
-<[lispingout@neverblued.info](mailto:lispingout@neverblued.info)>
+<[lisp@neverblued.info](mailto:lisp@neverblued.info)>
 
 Permission is hereby granted, free of charge, to any person obtaining a copy
 of this software and associated documentation files (the "Software"), to
-copy and run
-the Software, and to permit persons to whom the Software is
+copy and run the Software,
+and to permit persons to whom the Software is
 furnished to do so, subject to the following conditions:
 
 The above copyright notice and this permission notice shall be

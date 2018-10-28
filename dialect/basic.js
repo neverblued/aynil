@@ -1,4 +1,5 @@
 const _ = require ('lodash')
+const Entity = require ('../kernel/entity')
 
 module.exports = lisp => {
     
@@ -21,7 +22,27 @@ module.exports = lisp => {
         'dynamic', 'lambda', 'apply',
         [],
         function (callable, args) {
-	    return this.run (callable, args)
+	    return this.run (callable, ...args)
+        }
+    )
+    
+    lisp.set (
+        'dynamic', 'macro', 'backquote',
+        [],
+        function (...body) {
+	    const unquoted = value => {
+		if (_.isArray (value)) {
+		    const [ first, ...rest ] = value
+		    if (first === 'unquote') {
+			return this.evaluate ([ 'result', ...rest ])
+		    } else {
+			return _.map (value, unquoted)
+		    }
+		} else {
+		    return value
+		}
+	    }
+	    return unquoted (body)
         }
     )
     
@@ -38,7 +59,11 @@ module.exports = lisp => {
         [],
         function (first, ...rest) {
 	    return _.every (rest, thing => {
-		return _.isEqual (thing, first)
+		if (first instanceof Entity.model.entity) {
+		    return first.equal (thing)
+		} else {
+		    return _.isEqual (first, thing)
+		}
 	    })
         }
     )
@@ -108,7 +133,6 @@ module.exports = lisp => {
         [],
         function (value) {
 	    return value
-	    //return this.quote (value) .evaluate (this)
         }
     )
     
@@ -146,6 +170,14 @@ module.exports = lisp => {
 		})
             }))
         }
+    )
+    
+    lisp.set (
+	'dynamic', 'lambda', 'signal',
+	[],
+	function (condition) {
+	    throw new Error (condition)
+	}
     )
 
 }

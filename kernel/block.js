@@ -33,48 +33,56 @@ class Block {
             return callback (block)
         })
     }
-    
+
     evaluate (value) {
-        debug ('evaluate: %o ...', value)
-        let thing
+        debug ('\\ evaluate %o', value)
+        let result
         if (_.isUndefined (value) || _.isBoolean (value) || _.isNumber (value)) {
-            thing = value
-        } else if (_.isString (value)) {
-            const match = value.match (/^:([^\s\"]+)$/)
-            if (match) {
-                const name = match [1]
-                thing = new Entity.model.key (this, name)
-            } else if (value.length >= 2 && value [0] === '"' && value [value.length - 1] === '"') {
-                thing = value.substr (1, value.length - 2)
-            } else {
-                const number = _.toNumber (value)
-                if (! _.isNaN (number)) {
-                    thing = number
-                } else {
-                    const name = value
-                    const entity = this.lookup ('atom', 'datum', name)
-                    if (entity instanceof Entity.model.macro) {
-                        thing = entity.evaluator (this)
-                    } else {
-                        thing = entity.evaluate (this)
-                    }
-                }
-            }
-        } else if (_.isArray (value)) {
-            const [ name, ...parameter ] = value
-	    const entity = this.lookup ('sexp', 'macro', name)
-            thing = entity.evaluate (this, parameter)
+            result = value
         } else if (value instanceof Entity.model.entity) {
-            const entity = value
-            thing = entity.evaluate (this)
+            result = value.evaluate (this)
+        } else if (_.isString (value)) {
+            result = this.evaluateString (value)
+        } else if (_.isArray (value)) {
+            result = this.evaluateArray (value)
         } else {
             let error = new Error (`can not evaluate [${ typeof value }] ${ value }`)
             throw error
         }
-	debug ('/evaluate: %o ==>> [typeof %s] %s', value, typeof thing, thing)
-        return thing
+	const exhibit = _.isFunction (result) ? '#:FUNCTION' : result
+	debug ('/ evaluate %o ==>> [typeof %s] %o', value, typeof result, exhibit)
+        return result
     }
     
+    evaluateArray (value) {
+        const [ name, ...parameter ] = value
+	const entity = this.lookup ('sexp', 'lambda', name)
+        return entity.evaluate (this, parameter)
+    }
+    
+    evaluateString (value) {
+        const match = value.match (/^:([^\s\"]+)$/)
+        if (match) {
+            const name = match [1]
+            return new Entity.model.key (this, name)
+        } else if (value.length >= 2 && value [0] === '"' && value [value.length - 1] === '"') {
+            return value.substr (1, value.length - 2)
+        } else {
+            const number = _.toNumber (value)
+            if (! _.isNaN (number)) {
+                return number
+            } else {
+                const name = value
+                const entity = this.lookup ('atom', 'datum', name)
+                if (entity instanceof Entity.model.lambda) {
+                    return entity.evaluator (this)
+                } else {
+                    return entity.evaluate (this)
+                }
+            }
+        }
+    }
+   
     get (scope, entity, name) {
         this.check (scope, entity)
         return this.scope [scope] .get (entity, name)
@@ -85,20 +93,20 @@ class Block {
             let error = new Error (`bad order ${ order }`)
             throw error
         }
-        let thing
+        let value
         _.some (Scope.order, scope => {
             return _.some (Entity.order.evaluate [order], entity => {
-                thing = this.scope [scope] .get (entity, name)
-                return !! thing
+                value = this.scope [scope] .get (entity, name)
+                return !! value
             })
         })
-        if (! (thing instanceof Entity.model [model])) {
-            const exhibit = `(typeof ${ typeof thing }) ${ thing }`
-            let error = new Error (`bad ${ model } ${ name } => ${ exhibit }`)
+        if (! (value instanceof Entity.model [model])) {
+            let error = new Error (`bad ${ model } "${ name }" in "${ this.evaluate ('*filename*') }"`)
             throw error
         }
-        debug ('lookup: %s %s "%s" ==>> %s %s', order, model, name, typeof thing, thing)
-        return thing
+	const exhibit = _.isFunction (value) ? '#:FUNCTION' : value
+        debug ('lookup %s %s "%s" ==>> %s %s', order, model, name, typeof value, exhibit)
+        return value
     }
 
     path (source, type = 'lisp') {
@@ -164,11 +172,11 @@ class Block {
     }
 
     stack (callback) {
-        debug ('stack ...')
+        debug ('\\ stack')
         const block = new Block (this)
-        const thing = callback (block)
-        debug ('/stack: %s', thing)
-        return thing
+        const result = callback (block)
+        debug ('/ stack %s', result)
+        return result
     }
 }
 

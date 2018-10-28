@@ -85,7 +85,7 @@ class Lexical extends Scope {
     }
     
     integrate (scope) {
-        debug ('integrate ...')
+        debug ('\\ integrate')
         _.forEach (scope.binding, (binding, entity) => {
             if (! (entity in this.binding)) {
                 this.binding [entity] = {}
@@ -98,8 +98,8 @@ class Lexical extends Scope {
         if (scope.block.base) {
             this.integrate (scope.block.base.scope.lexical)
         }
-        debug ('/integrate')
-    }    
+        debug ('/ integrate')
+    }
 }
 
 module.exports = {

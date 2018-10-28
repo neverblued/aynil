@@ -8,7 +8,7 @@ module.exports = lisp => {
 	function (...values) {
 	    return _.every (values, value => {
 		return !! value
-	    })
+	    }) ? _.last (values) : false
 	}
     )
     
@@ -41,7 +41,7 @@ module.exports = lisp => {
 	'dynamic', 'lambda', 'or',
 	[],
 	function (...values) {
-	    return _.some (values, value => {
+	    return _.find (values, value => {
 		return !! value
 	    })
 	}
@@ -50,30 +50,6 @@ module.exports = lisp => {
     lisp.set (
 	'dynamic', 'datum', 'true',
 	true
-    )
-
-    lisp.set (
-	'dynamic', 'macro', 'when',
-	[ 'clause', '&rest', 'things' ],
-	function (clause, ...things) {
-	    if (this.evaluate (clause)) {
-		return this.evaluate ([ 'result', ...things ])
-	    } else {
-		return undefined
-	    }
-	}
-    )
-
-    lisp.set (
-	'dynamic', 'macro', 'unless',
-	[ 'clause', '&rest', 'things' ],
-	function (clause, ...things) {
-	    if (this.evaluate (clause)) {
-		return undefined
-	    } else {
-		return this.evaluate ([ 'result', ...things ])
-	    }
-	}
     )
     
 }

@@ -4,11 +4,12 @@ module.exports = lisp => {
         'dynamic', 'lambda', 'print',
         [],
         function (...all) {
-	    const message = _.join (all, '')
-            console.log (`
-    @=> ${ message }
-`)
-	    return message
+	    console.log ('')
+	    _.forEach (all, (thing, index) => {
+		console.log (`    >>> №${ index } [typeof ${ typeof thing }] =`, thing)
+	    })
+	    console.log ('')
+	    return _.last (all)
         }
     )
 }
