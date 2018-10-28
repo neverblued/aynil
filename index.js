@@ -3,7 +3,6 @@ const path = require ('path')
 
 const parser = require ('./kernel/parser')
 const environment = new (require ('./kernel/block'))
-require ('./dialect') (environment)
 
 const lisp = file => {
     file = path.resolve (file)
@@ -17,9 +16,17 @@ const lisp = file => {
     })
 }
 
-lisp ('./dialect/_.lisp')
-lisp ('./dialect/when.lisp')
-lisp ('./dialect/unless.lisp')
-lisp ('./dialect/cond.lisp')
+const dialect = `${ __dirname }/dialect`
+fs.readdirSync (dialect) .forEach (file => {
+    if (/^\./ .test (file)) {
+	return;
+    } else if (/\.lisp$/ .test (file)) {
+	lisp (`${ dialect }/${ file }`)
+    } else if (/\.js$/ .test (file)) {
+	require (`${ dialect }/${ file }`) (environment)
+    } else {
+	throw new Error (`bad dialect source "${ file }"`)
+    }
+})
 
 module.exports = lisp
