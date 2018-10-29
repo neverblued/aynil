@@ -32,8 +32,9 @@ the `lambda` `say-hi` definition's `lexical` closure.
 
       (datum hi "Hello")
 
-      (lambda say-hi (target)
-	    (+ hi ", " target "!"))))
+      (lambda say-hi
+          (target)
+        (+ hi ", " target "!"))))
 
 (say-hi "world")
 ```
@@ -53,12 +54,12 @@ no need to reinvent `lodash`.
 (set (dynamic
 
       (macro unless
-	     (clause &rest body)
+          (clause &rest body)
 
-	     (_ concat
-		    (backquote when
-			           (not (unquote clause)))
-		    body))
+        (_ concat
+           (backquote when
+                      (not (unquote clause)))
+                      body))
 ```
 
 And yes, the parser does not complain about trailing parentheses.
@@ -95,10 +96,14 @@ The optional key `:js`
 switches our lisp requiring "back" to Node's behaviour.
 
 ```lisp
-(set (dynamic (datum _ (require "lodash" :js))))
+(set (dynamic
+
+      (datum _
+             (require "lodash" :js))))
+             
 (+ 2 3 4
    (call (. _ :sum)
-	     (list 10 11 12)))
+         (list 10 11 12)))
 ```
 
 ### Special Data

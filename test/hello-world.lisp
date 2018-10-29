@@ -2,7 +2,8 @@
 
       (datum hi "Hello")
 
-      (lambda say-hi (target)
-	(+ hi ", " target "!"))))
+      (lambda say-hi
+          (target)
+        (+ hi ", " target "!"))))
 
 (say-hi "world")
