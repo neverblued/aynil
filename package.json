@@ -1,9 +1,12 @@
 {
     "name": "aynil",
     "version": "0.9.1",
+    "author": "Dmytro Pinskyi @neverblued",
+    "description": "Turns your Node into a virtual lisp machine! λ.λ",
+    "license": "MIT",
     "keywords": [
-	"virtual",
-	"lisp",
+	    "virtual",
+	    "lisp",
         "machine"
     ],
     "dependencies": {
@@ -13,6 +16,11 @@
         "chai": "latest",
         "debug": "latest",
         "mocha": "latest"
+    },
+    "homepage": "https://github.com/neverblued/aynil",
+    "repository": {
+        "type": "git",
+        "url": "https://github.com/neverblued/aynil.git"
     },
     "scripts": {
         "start": "./node_modules/.bin/mocha test"
