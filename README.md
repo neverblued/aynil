@@ -4,7 +4,7 @@
 
 Is life too short either for hacking on blubs and for adopting mature lisp ecosystems?
 
-Let *AYNIL* turn your Node into a virtual lisp machine!
+*AYNIL* turns your Node into a virtual lisp machine!
 `λ.λ`
 
 
@@ -23,7 +23,7 @@ And the lisp file is parsed and evaluated!
 
 #### Enjoy
 
-For example, the following program returns *"Hello, world!"* as text.
+For example, this program returns *"Hello, world!"* as text.
 Look as variable `hi` evaluates from inside
 the `lambda` `say-hi` definition's `lexical` closure.
 
@@ -38,11 +38,15 @@ the `lambda` `say-hi` definition's `lexical` closure.
 (say-hi "world")
 ```
 
+As far as native JavaScript `+` concatenates strings,
+it works the same in lisp, too.
+Remember, it's just an awesome virtual wrapper around JS runtime.
+
 #### Develop
 
 Current version of AYNIL already supports
-backquoting and macros, so we could code almost anything.
-I said "almost" because today is not sixties and
+backquoting and macros, so we could code *almost* anything.
+I mean, today ain't sixties and
 no need to reinvent `lodash`.
 
 ```lisp
@@ -73,36 +77,48 @@ The testing suite contains more supported usage examples.
 Documentation
 -------------
 
-Project page — [http://neverblued.info/aynil](http://neverblued.info/aynil)
-
-Mail author — [aynil@neverblued.info](mailto:aynil@neverblued.info)
-
 ### Integration
 
 You may `require` application-specific and vendor lisp source files
 which are located either absolutely and relatively to the current code.
-The following two expressions are equal:
+The following two expressions are equal.
 
 ```lisp
-(require (+ *dirname* "/component.lisp"))
 (require "./component.lisp")
 ```
 
-Special variables `*dirname*` and `*filename*`
-are automatically bound to the lexical scope of
-each lisp file you require.
-
 As well, you may `require` into your lisp program
 either application-specific JavaScript files or any Node modules.
-Look at the following example of `lodash` as if it was
-not available out of the box as AYNIL's dependency,
-and pay attention to adding a `:js` key.
+Look at the following example with `lodash` as if it was
+not available out of the box as AYNIL's dependency.
+The optional key `:js`
+switches our lisp requiring "back" to Node's behaviour.
 
 ```lisp
 (set (dynamic (datum _ (require "lodash" :js))))
 (+ 2 3 4
    (call (. _ :sum)
 	     (list 10 11 12)))
+```
+
+### Special Data
+
+Following special variables
+are automatically bound to the lexical scope of
+each lisp file you require.
+As far as Common Lisp style guides recommend
+surrounding their names by asterisks (the *earmuffs*),
+why not?
+
+* `*dirname*` — equal to Node `__dirname`
+* `*filename*` — same plus source file name, the full path
+* `*module*` — the innermost JavaScript environment
+
+With this in mind, next code is equal to the first one
+of the "Integration part".
+
+```lisp
+(require (+ *dirname* "/component.lisp"))
 ```
 
 ### The Dialect
@@ -221,8 +237,9 @@ Change Log
 Licence
 -------
 
-Copyright &copy; 2018
-[Dmytro Pinskyi](http://neverblued.info/software)
+&copy; 2018 AYNIL ("All You Need Is Lisp")
+by Dmytro Pinskyi
+([Neverblued Software](http://neverblued.info/software))
 
 Permission is hereby granted, free of charge, to any person obtaining a copy
 of this software and associated documentation files (the "Software"), to
@@ -240,3 +257,6 @@ AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
 LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
+
+For technical support and related discussion please mail author to
+[aynil@neverblued.info](mailto:aynil@neverblued.info)
