@@ -1,42 +1,81 @@
 ((( All You Need Is Lisp )))
 ============================
 
+
+Is life too short either for hacking on blubs and for adopting mature lisp ecosystems?
+
+Let *AYNIL* turn your Node into a virtual lisp machine!
 `λ.λ`
-
-
-Overview
---------
-
-This framework turns your Node into a virtual lisp machine.
 
 
 Usage
 -----
 
-#### 1. Test
+#### Apply
 
-```bash
-$ npm start
-```
-
-#### 2. Apply
+Just pass your application's main (entry) file to this framework...
 
 ```javascript
 require ('aynil') (__dirname + '/test/hello-world.lisp')
 ```
 
-#### 3. Enjoy
+And the lisp file is parsed and evaluated!
+
+#### Enjoy
+
+For example, the following program returns *"Hello, world!"* as text.
+Look as variable `hi` evaluates from inside
+the `lambda` `say-hi` definition's `lexical` closure.
 
 ```lisp
-(set (lexical (datum hi "Hello")
-	          (lambda say-hi (target)
-		        (+ hi ", " target "!"))))
+(set (lexical
+
+      (datum hi "Hello")
+
+      (lambda say-hi (target)
+	    (+ hi ", " target "!"))))
+
 (say-hi "world")
 ```
+
+#### Develop
+
+Current version of AYNIL already supports
+backquoting and macros, so we could code almost anything.
+I said "almost" because today is not sixties and
+no need to reinvent `lodash`.
+
+```lisp
+(set (dynamic
+
+      (macro unless
+	     (clause &rest body)
+
+	     (_ concat
+		    (backquote when
+			           (not (unquote clause)))
+		    body))
+```
+
+And yes, the parser does not complain about trailing parentheses.
+Here you may notice that the first two of them are not closed,
+as if we wanted to append more definitions later.
+
+#### Test
+
+```bash
+$ npm start
+```
+
+The testing suite contains more supported usage examples.
 
 
 Documentation
 -------------
+
+Project page — [http://neverblued.info/aynil](http://neverblued.info/aynil)
+
+Mail author — [aynil@neverblued.info](mailto:aynil@neverblued.info)
 
 ### Integration
 
@@ -49,8 +88,15 @@ The following two expressions are equal:
 (require "./component.lisp")
 ```
 
-As well, you may `require` into your lisp runtime
-either application-specific JavaScript files or any node modules:
+Special variables `*dirname*` and `*filename*`
+are automatically bound to the lexical scope of
+each lisp file you require.
+
+As well, you may `require` into your lisp program
+either application-specific JavaScript files or any Node modules.
+Look at the following example of `lodash` as if it was
+not available out of the box as AYNIL's dependency,
+and pay attention to adding a `:js` key.
 
 ```lisp
 (set (dynamic (datum _ (require "lodash" :js))))
@@ -80,7 +126,7 @@ Atomic entities' (`Quote`, `Key`, `Datum` and `Symbol`)
 value definition consists of a single expression.
 Entities that accept call arguments (`Macro` and `Lambda`) 
 take the first definition form as the formal parameter,
-while rest forms are evaluated as the call result.
+while rest forms are evaluated as the function's body.
 This is similar to Common Lisp:
 
 ```
@@ -147,15 +193,20 @@ You may define bindings in both scopes using both methods `let` and `set`.
 Future Plans
 ------------
 
-* Bundler plugins
 * Signal system
 * Object system
+* Async calling
+* Bundling
 * ...
 * *PROFIT!!!!!!!*
 
 
 Change Log
 ----------
+
+#### v.0.9.0
+
+* Support user macros.
 
 #### v.0.8.0
 
@@ -171,8 +222,7 @@ Licence
 -------
 
 Copyright &copy; 2018
-[Dmytro Pinskyi](http://neverblued.info/)
-<[lisp@neverblued.info](mailto:lisp@neverblued.info)>
+[Dmytro Pinskyi](http://neverblued.info/software)
 
 Permission is hereby granted, free of charge, to any person obtaining a copy
 of this software and associated documentation files (the "Software"), to
