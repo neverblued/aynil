@@ -225,6 +225,11 @@ Future Plans
 Change Log
 ----------
 
+#### v.0.10.0
+
+* Support generating unique ids by `uid` (alias of `uuid/v1`).
+* Support calling functions evaluated from a sexp head which is represented by a non-callable entity.
+
 #### v.0.9.0
 
 * Support user macros.

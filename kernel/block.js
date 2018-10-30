@@ -15,7 +15,7 @@ class Block {
             this.scope [scope] = new (Scope.model [scope]) (this)
         })
     }
-
+    
     check (scope, entity) {
         if (! (scope in Scope.model)) {
             let error = new Error (`bad scope "${ scope }"`)
@@ -26,14 +26,14 @@ class Block {
             throw error
         }
     }
-
+    
     closure (callback) {
         return this.stack (block => {
             block.scope.lexical.integrate (this.scope.lexical)
             return callback (block)
         })
     }
-
+    
     evaluate (value) {
         debug ('\\ evaluate %o', value)
         let result
@@ -49,15 +49,25 @@ class Block {
             let error = new Error (`can not evaluate [${ typeof value }] ${ value }`)
             throw error
         }
-	const exhibit = _.isFunction (result) ? '#:FUNCTION' : result
-	debug ('/ evaluate %o ==>> [typeof %s] %o', value, typeof result, exhibit)
+	    const exhibit = _.isFunction (result) ? '#:FUNCTION' : result
+	    debug ('/ evaluate %o ==>> [typeof %s] %o', value, typeof result, exhibit)
         return result
     }
     
     evaluateArray (value) {
         const [ name, ...parameter ] = value
-	const entity = this.lookup ('sexp', 'lambda', name)
-        return entity.evaluate (this, parameter)
+	    const entity = this.lookup ('sexp', 'datum', name)
+        const result = entity.evaluate (this, parameter)
+        if (entity instanceof Entity.model.lambda) {
+            return result
+        } else {
+            if (_.isFunction (result)) {
+                return result ()
+            } else {
+                const error = new Error (`can not call [${ typeof result }] ${ result }`) 
+                throw error
+            }
+        }
     }
     
     evaluateString (value) {
@@ -82,12 +92,12 @@ class Block {
             }
         }
     }
-   
+    
     get (scope, entity, name) {
         this.check (scope, entity)
         return this.scope [scope] .get (entity, name)
     }
-
+    
     lookup (order, model, name) {
         if (! (order in Entity.order.evaluate)) {
             let error = new Error (`bad order ${ order }`)
@@ -104,73 +114,73 @@ class Block {
             let error = new Error (`bad ${ model } "${ name }" in "${ this.evaluate ('*filename*') }"`)
             throw error
         }
-	const exhibit = _.isFunction (value) ? '#:FUNCTION' : value
+	    const exhibit = _.isFunction (value) ? '#:FUNCTION' : value
         debug ('lookup %s %s "%s" ==>> %s %s', order, model, name, typeof value, exhibit)
         return value
     }
-
+    
     path (source, type = 'lisp') {
-	let resolved
-	if (source [0] === '.') {
-	    let folder = this.evaluate ('*dirname*')
-	    resolved = `${ folder }/${ source }`
-	} else if (source [0] !== '/') {
-	    let folder = this.evaluate ('*dirname*')
-	    while (! fs.existsSync (folder + '/node_modules')) {
-		folder = path.resolve (folder, '..')
-		if (folder === '/') {
-		    let error = new Error (`bad source path "${ source }"`)
-		    throw error
-		}
+	    let resolved
+	    if (source [0] === '.') {
+	        let folder = this.evaluate ('*dirname*')
+	        resolved = `${ folder }/${ source }`
+	    } else if (source [0] !== '/') {
+	        let folder = this.evaluate ('*dirname*')
+	        while (! fs.existsSync (folder + '/node_modules')) {
+		        folder = path.resolve (folder, '..')
+		        if (folder === '/') {
+		            let error = new Error (`bad source path "${ source }"`)
+		            throw error
+		        }
+	        }
+	        resolved = `${ folder }/node_modules/${ source }`
 	    }
-	    resolved = `${ folder }/node_modules/${ source }`
-	}
-	if (fs.existsSync (resolved)) {
-	    if (fs.statSync (resolved) .isDirectory ()) {
-		resolved += `/index.${ type }`
+	    if (fs.existsSync (resolved)) {
+	        if (fs.statSync (resolved) .isDirectory ()) {
+		        resolved += `/index.${ type }`
+	        }
+	    } else {
+	        resolved += `.${ type }`
 	    }
-	} else {
-	    resolved += `.${ type }`
-	}
-	return resolved
+	    return resolved
     }
     
     quote (value) {
-	debug ('quote [typeof %s] %o', typeof value, value)
-	return new Entity.model.quote (this, value)
+	    debug ('quote [typeof %s] %o', typeof value, value)
+	    return new Entity.model.quote (this, value)
     }
     
     run (callable, ...args) {
-	debug ('run [typeof %s] %s (%o) ...', typeof callable, callable, args)
+	    debug ('run [typeof %s] %s (%o) ...', typeof callable, callable, args)
         if (_.isFunction (callable)) {
-	    const jsFunction = callable
-	    debug ('run function: %s', jsFunction)
+	        const jsFunction = callable
+	        debug ('run function: %s', jsFunction)
             return jsFunction (...args)
         } else if (callable instanceof Entity.model.macro) {
-	    const entity = callable
-	    debug ('run entity: %s', entity)
+	        const entity = callable
+	        debug ('run entity: %s', entity)
             return entity.evaluate (this, _.map (args, arg => {
-		return this.quote (arg)
-	    }))
+		        return this.quote (arg)
+	        }))
         } else if (_.isString (callable)) {
             const entity = this.lookup ('atom', 'symbol', callable)
-	    debug ('run atom: %s', entity)
+	        debug ('run atom: %s', entity)
             return entity.evaluate (this, args)
         } else {
             let error = new Error (`can not run "${ callable }"`)
             throw error
         }
     }
-
+    
     set (scope, entity, name, ...value) {
         this.check (scope, entity)
         return this.scope [scope] .set (
-	    entity,
-	    name,
-	    new (Entity.model [entity]) (this, name, value)
-	)
+	        entity,
+	        name,
+	        new (Entity.model [entity]) (this, name, value)
+	    )
     }
-
+    
     stack (callback) {
         debug ('\\ stack')
         const block = new Block (this)
