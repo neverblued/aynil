@@ -1,5 +1,6 @@
 const _ = require ('lodash')
-const debug = require ('debug') ('lisp-entity')
+const debug = require ('debug') ('lisp-expression')
+
 const Scope = require ('./scope')
 
 class Entity {
@@ -12,12 +13,13 @@ class Entity {
         return this.toString ()
     }
 
-    equal (thing) {
-	    return _.isEqual (thing, this)
+    equal (entity) {
+	    return _.isEqual (entity, this)
     }
     
     evaluate () {
-	    throw new Error ('can not evaluate abstract entity')
+	    let error = new Error ('can not evaluate abstract entity')
+        throw error
     }
 }
 
@@ -178,7 +180,7 @@ class Lambda extends Symbol {
 		            _.forEach (args, ([ name, value, isList ]) => {
 			            block.set ('lexical', 'datum', name, isList ? [ 'list', ...value ] : value)
 		            })
-		            result = block.evaluate ([ 'result', ...this.body ])
+		            result = block.evaluate ([ 'success', ...this.body ])
 		        })
 		        
             }
@@ -219,7 +221,7 @@ class Macro extends Lambda {
 		        _.forEach (args, ([ name, value, isList ]) => {
 		            block.set ('lexical', 'datum', name, block.quote (value))
 		        })
-		        expanded = block.evaluate ([ 'result', ...this.body ])
+		        expanded = block.evaluate ([ 'success', ...this.body ])
 	        })
 	        debug ('expanded macro "%s" ==>> %o', this.name, expanded)
 	        result = block.evaluate (expanded)

@@ -3,68 +3,71 @@ const debug = require ('debug') ('lisp-scope')
 
 class Scope {
     
-    constructor (block) {
-        this.block = block
+    constructor (environment) {
+        this.environment = environment
         this.binding = {}
     }
-
-    check (entity) {
-        const Entity = require ('./entity')
-        if (! _.includes (Entity.order.scope, entity)) {
-            let error = new Error (`bad entity ${ entity }`)
+    
+    check (model) {
+        const Expression = require ('./expression')
+        if (! _.includes (Expression.order.scope, model)) {
+            let error = new Error (`bad model ${ model }`)
             throw error
         }
     }
-
-    get (entity, name) {
-        this.check (entity)
-        if (! (entity in this.binding)) {
+    
+    get (model, name) {
+        this.check (model)
+        if (! (model in this.binding)) {
             return undefined
         }
-        return this.binding [entity] [name]
+        return this.binding [model] [name]
     }
 
-    set (entity, name, thing) {
-        this.check (entity)
-        if (! (entity in this.binding)) {
-            this.binding [entity] = {}
+    set (model, name, thing) {
+        this.check (model)
+        if (! (model in this.binding)) {
+            this.binding [model] = {}
         }
-	debug ('set: %s %s %o', entity, name, thing)
-        return this.binding [entity] [name] = thing
+        debug ('set: %s %s %o', model, name, thing)
+        return this.binding [model] [name] = thing
     }
 }
 
 class Dynamic extends Scope {
     
-    ifOwnBinding (entity, name, yes, no) {
-        if (entity in this.binding && name in this.binding [entity]) {
+    ifOwnBinding (model, name, yes, no) {
+        if (model in this.binding && name in this.binding [model]) {
             return yes ()
-        } else if (! this.block.base) {
+        } else if (! this.environment.base) {
             return yes ()
         } else {
-            return no (this.block.base.scope)
+            return no (this.environment.base.scope)
         }
     }
     
-    get (entity, name) {
-        return this.ifOwnBinding (entity, name,
+    get (model, name) {
+        return this.ifOwnBinding (
+            model,
+            name,
             () => {
-                return super.get (entity, name)
+                return super.get (model, name)
             },
             (baseScope) => {
-                return baseScope.dynamic.get (entity, name)
+                return baseScope.dynamic.get (model, name)
             }
         )
     }
     
-    set (entity, name, thing) {
-        return this.ifOwnBinding (entity, name,
+    set (model, name, entity) {
+        return this.ifOwnBinding (
+            model, name,
             () => {
-                return super.set (entity, name, thing)
+                return super.set (model, name, entity)
             },
             (baseScope) => {
-                debug ('base dynamic set: %s %s %o', entity, name, thing)
-                return baseScope.dynamic.set (entity, name, thing)
+                debug ('base dynamic set: %s %s %o', model, name, entity)
+                return baseScope.dynamic.set (model, name, entity)
             }
         )
     }
@@ -72,31 +75,31 @@ class Dynamic extends Scope {
 
 class Lexical extends Scope {
     
-    get (entity, name) {
-        const thing = super.get (entity, name)
-        if (! _.isUndefined (thing)) {
-            return thing
+    get (model, name) {
+        const entity = super.get (model, name)
+        if (! _.isUndefined (entity)) {
+            return entity
         }
-        if (this.block.base) {
-            return this.block.base.scope.lexical.get (entity, name)
+        if (this.environment.base) {
+            return this.environment.base.scope.lexical.get (model, name)
         } else {
-	    return undefined
-	}
+            return undefined
+        }
     }
     
     integrate (scope) {
         debug ('\\ integrate')
-        _.forEach (scope.binding, (binding, entity) => {
-            if (! (entity in this.binding)) {
-                this.binding [entity] = {}
+        _.forEach (scope.binding, (binding, model) => {
+            if (! (model in this.binding)) {
+                this.binding [model] = {}
             }
-            _.forEach (binding, (thing, name) => {
-                debug ('integrate: %s %s %s', entity, name, thing)
-                this.block.scope.lexical.set (entity, name, thing)
+            _.forEach (binding, (entity, name) => {
+                debug ('integrate: %s %s %s', model, name, entity)
+                this.environment.scope.lexical.set (model, name, entity)
             })
         })
-        if (scope.block.base) {
-            this.integrate (scope.block.base.scope.lexical)
+        if (scope.environment.base) {
+            this.integrate (scope.environment.base.scope.lexical)
         }
         debug ('/ integrate')
     }
@@ -108,7 +111,7 @@ module.exports = {
         dynamic: Dynamic,
         lexical: Lexical,
     },
-
+    
     order: [
         'dynamic', 'lexical'
     ]

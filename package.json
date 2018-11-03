@@ -1,6 +1,6 @@
 {
     "name": "aynil",
-    "version": "0.10.0",
+    "version": "0.10.1",
     "author": "Dmytro Pinskyi @neverblued",
     "description": "Turns your Node into a virtual lisp machine! λ.λ",
     "license": "MIT",

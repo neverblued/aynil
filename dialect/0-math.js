@@ -1,4 +1,5 @@
 const _ = require ('lodash')
+
 module.exports = lisp => {
     
     lisp.set (
@@ -10,21 +11,21 @@ module.exports = lisp => {
             })
         }
     )
-
+    
     lisp.set (
         'dynamic', 'lambda', '>',
         [],
         function (...numbers) {
-	    const prelast = numbers.length - 1
-	    for (let index = 0; index < prelast; index ++) {
-		if (! (numbers [index] > numbers [index + 1])) {
-		    return false
-		}
-	    }
-	    return true
+            const prelast = numbers.length - 1
+            for (let index = 0; index < prelast; index ++) {
+                if (! (numbers [index] > numbers [index + 1])) {
+                    return false
+                }
+            }
+            return true
         }
     )
-
+    
     lisp.set (
         'dynamic', 'lambda', '+',
         [],
@@ -44,7 +45,7 @@ module.exports = lisp => {
             }, first)
         }
     )
-
+    
     lisp.set (
         'dynamic', 'lambda', '*',
         [],
@@ -54,7 +55,7 @@ module.exports = lisp => {
             }, first)
         }
     )
-
+    
     lisp.set (
         'dynamic', 'lambda', '/',
         [ 'first', '...', 'rest' ],
@@ -64,7 +65,7 @@ module.exports = lisp => {
             }, first)
         }
     )
-
+    
     lisp.set (
         'dynamic', 'symbol', 'pi',
         Math.PI

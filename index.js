@@ -1,31 +1,34 @@
 const fs = require ('fs')
 const path = require ('path')
 
-const parser = require ('./kernel/parser')
-const environment = new (require ('./kernel/block'))
+const environment = new (require ('./kernel/environment'))
+
+const setSpecial = (environment, name, value) => {
+    environment.set ('lexical', 'datum', `*${ name }*`, environment.quote (value))
+}
 
 const lisp = file => {
     file = path.resolve (file)
     const code = fs.readFileSync (file, 'utf-8')
-    const tree = parser.interpret (parser.read (code))
-    return environment.closure (block => {
-	block.set ('lexical', 'datum', '*module*', block.quote (module))
-	block.set ('lexical', 'datum', '*filename*', block.quote (file))
-	block.set ('lexical', 'datum', '*dirname*', block.quote (path.dirname (file)))
-	return block.evaluate (tree)
+    const tree = environment.interpret (environment.read (code))
+    return environment.closure (environment => {
+        setSpecial (environment, 'module', module)
+        setSpecial (environment, 'filename', file)
+        setSpecial (environment, 'dirname', path.dirname (file))
+        return environment.evaluate (tree)
     })
 }
 
 const dialect = `${ __dirname }/dialect`
 fs.readdirSync (dialect) .forEach (file => {
     if (/^\./ .test (file)) {
-	return;
+        return;
     } else if (/\.lisp$/ .test (file)) {
-	lisp (`${ dialect }/${ file }`)
+        lisp (`${ dialect }/${ file }`)
     } else if (/\.js$/ .test (file)) {
-	require (`${ dialect }/${ file }`) (environment)
+        require (`${ dialect }/${ file }`) (environment)
     } else {
-	throw new Error (`bad dialect source "${ file }"`)
+        throw new Error (`bad dialect source "${ file }"`)
     }
 })
 

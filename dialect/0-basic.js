@@ -1,5 +1,6 @@
 const _ = require ('lodash')
-const Entity = require ('../kernel/entity')
+
+const Expression = require ('../kernel/expression')
 
 module.exports = lisp => {
     
@@ -7,7 +8,7 @@ module.exports = lisp => {
         'dynamic', 'lambda', '.',
         [],
         function (hashtable, key) {
-            if (_.isObject (key) && 'name' in key) {
+            if (key instanceof Expression.model.key) {
                 key = key.name
             }
             if (hashtable && key in hashtable) {
@@ -21,8 +22,8 @@ module.exports = lisp => {
     lisp.set (
         'dynamic', 'lambda', 'apply',
         [],
-        function (callable, args) {
-	    return this.run (callable, ...args)
+        function (operator, args) {
+            return this.run (operator, ...args)
         }
     )
     
@@ -30,27 +31,27 @@ module.exports = lisp => {
         'dynamic', 'macro', 'backquote',
         [],
         function (...body) {
-	    const unquoted = value => {
-		if (_.isArray (value)) {
-		    const [ first, ...rest ] = value
-		    if (first === 'unquote') {
-			return this.evaluate ([ 'result', ...rest ])
-		    } else {
-			return _.map (value, unquoted)
-		    }
-		} else {
-		    return value
-		}
-	    }
-	    return unquoted (body)
+            const unquoted = value => {
+                if (_.isArray (value)) {
+                    const [ first, ...rest ] = value
+                    if (first === 'unquote') {
+                        return this.evaluate ([ 'success', ...rest ])
+                    } else {
+                        return _.map (value, unquoted)
+                    }
+                } else {
+                    return value
+                }
+            }
+            return unquoted (body)
         }
     )
     
     lisp.set (
         'dynamic', 'lambda', 'call',
         [],
-        function (callable, ...args) {
-	    return this.run (callable, ...args)
+        function (operator, ...args) {
+            return this.run (operator, ...args)
         }
     )
     
@@ -58,50 +59,44 @@ module.exports = lisp => {
         'dynamic', 'lambda', 'equal',
         [],
         function (first, ...rest) {
-	    return _.every (rest, thing => {
-		if (first instanceof Entity.model.entity) {
-		    return first.equal (thing)
-		} else {
-		    return _.isEqual (first, thing)
-		}
-	    })
+            return _.every (rest, thing => {
+                if (first instanceof Expression.model.entity) {
+                    return first.equal (thing)
+                } else {
+                    return _.isEqual (first, thing)
+                }
+            })
         }
     )
 
     lisp.set (
-	'dynamic', 'lambda', 'evaluate',
-	[ 'value' ],
-	function (value) {
-	    return this.evaluate (value)
-	}
+        'dynamic', 'lambda', 'evaluate',
+        [ 'value' ],
+        function (value) {
+            return this.evaluate (value)
+        }
     )
 
     lisp.set (
-	'dynamic', 'macro', 'get',
-	[ 'name', '&key', 'scope', 'entity'],
-	function (name, context) {
-	    const { scope, entity } = context
-	    return this.get (scope, entity, name)
-	}
+        'dynamic', 'macro', 'get',
+        [ 'name', '&key', 'scope', 'model'],
+        function (name, context) {
+            const { scope, model } = context
+            return this.get (scope, model, name)
+        }
     )
     
     lisp.set (
         'dynamic', 'lambda', 'hashtable',
         [],
-        function (...keysAndValues) {
-            const hashtable = {}
-            _.forEach (_.chunk (keysAndValues, 2), ([ key, value ]) => {
-                hashtable [key.name || key] = value
-            })
-            return hashtable
-        }
-    )
-    
-    lisp.set (
-        'dynamic', 'macro', 'key',
-        [ 'name' ],
-        function (name) {
-            return this.evaluate (`:${ name }`)
+        function (...pairs) {
+            return _.reduce (_.chunk (pairs, 2), function (hashtable, [ key, value ]) {
+                if (key instanceof Expression.model.key) {
+                    key = key.name
+                }
+                hashtable [key] = value
+                return hashtable
+            }, {})
         }
     )
     
@@ -110,12 +105,12 @@ module.exports = lisp => {
         [],
         function (scopes, ...body) {
             return this.stack (block => {
-		_.forEach (scopes, ([ scope, ...bindings ]) => {
-		    _.forEach (bindings, ([ entity, name, ...value ]) => {
-			block.set (scope, entity, name, ...value)
-		    })
-		})
-                return block.evaluate ([ 'result', ...body])
+                _.forEach (scopes, ([ scope, ...bindings ]) => {
+                    _.forEach (bindings, ([ expression, name, ...value ]) => {
+                        block.set (scope, expression, name, ...value)
+                    })
+                })
+                return block.evaluate ([ 'success', ...body])
             })
         }
     )
@@ -124,7 +119,15 @@ module.exports = lisp => {
         'dynamic', 'lambda', 'list',
         [],
         function (...items) {
-	    return items
+            return items
+        }
+    )
+    
+    lisp.set (
+        'dynamic', 'macro', 'make-key',
+        [ 'name' ],
+        function (name) {
+            return this.evaluate (`:${ name }`)
         }
     )
     
@@ -132,7 +135,7 @@ module.exports = lisp => {
         'dynamic', 'macro', 'quote',
         [],
         function (value) {
-	    return value
+            return value
         }
     )
     
@@ -140,23 +143,13 @@ module.exports = lisp => {
         'dynamic', 'lambda', 'require',
         [ 'source', 'type' ],
         function (source, mode) {
-	    const type = mode && mode.name
-	    source = this.path (source, type)
-	    if (type === 'js') {
-		return require (source)
-	    } else {
-		return require ('..') (source)
-	    }
-        }
-    )
-    
-    lisp.set (
-        'dynamic', 'macro', 'result',
-        [],
-        function (...program) {
-            return _.last (_.map (program, expression => {
-                return this.evaluate (expression)
-            }))
+            const type = mode && mode.name
+            source = this.path (source, type)
+            if (type === 'js') {
+                return require (source)
+            } else {
+                return require ('..') (source)
+            }
         }
     )
     
@@ -165,19 +158,29 @@ module.exports = lisp => {
         [],
         function (...scopes) {
             return _.flatten (_.map (scopes, ([ scope, ...bindings ]) => {
-		return _.map (bindings, ([ entity, name, ...value ]) => {
-                    return this.set (scope, entity, name, ...value)
-		})
+                return _.map (bindings, ([ expression, name, ...value ]) => {
+                    return this.set (scope, expression, name, ...value)
+                })
             }))
         }
     )
     
     lisp.set (
-	'dynamic', 'lambda', 'signal',
-	[],
-	function (condition) {
-	    throw new Error (condition)
-	}
+        'dynamic', 'lambda', 'signal',
+        [],
+        function (condition) {
+            throw new Error (condition)
+        }
     )
-
+    
+    lisp.set (
+        'dynamic', 'macro', 'success',
+        [ '&rest', 'expressions' ],
+        function (...expressions) {
+            return _.last (_.map (expressions, expression => {
+                return this.evaluate (expression)
+            }))
+        }
+    )
+    
 }
