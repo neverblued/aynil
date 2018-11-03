@@ -28,7 +28,7 @@ fs.readdirSync (dialect) .forEach (file => {
     } else if (/\.js$/ .test (file)) {
         require (`${ dialect }/${ file }`) (environment)
     } else {
-        throw new Error (`bad dialect source "${ file }"`)
+        console.warn (`bad dialect source "${ file }"`)
     }
 })
 
